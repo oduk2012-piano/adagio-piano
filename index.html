@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7C5CFF">
+<meta name="description" content="Хүүхдэд зориулсан пиано тоглох дасгалын апп">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Adagio">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Adagio Piano School</title>
+<style>
+  :root {
+    --bg: #F4F0FF;
+    --ink: #2B2250;
+    --accent: #7C5CFF;
+    --pink: #FF5CAA;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background:
+      radial-gradient(circle at 15% 0%, #E4DAFF 0, transparent 45%),
+      radial-gradient(circle at 100% 100%, #FFD9EC 0, transparent 40%),
+      var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .brand h1 { margin: 0; line-height: 0; }
+  .brand img { height: 72px; width: auto; display: block; }
+  .brand small { display: block; font-size: 13px; font-weight: 500; opacity: .65; }
+
+  #now {
+    min-height: 56px;
+    font-size: 44px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .piano {
+    position: relative;
+    width: min(100%, 720px);
+    height: min(46vh, 300px);
+    display: flex;
+    background: linear-gradient(180deg, #3A2E6E, #2B2250);
+    padding: 12px 12px 16px;
+    border-radius: 20px;
+    box-shadow: 0 14px 34px rgba(43,34,80,.3);
+  }
+  .keys { position: relative; flex: 1; display: flex; }
+
+  .white {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #cfc8e8;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    touch-action: none;
+    cursor: pointer;
+    transition: background .08s, transform .08s;
+  }
+  .white .dot {
+    width: 100%;
+    text-align: center;
+    padding-top: 6px;
+    border-top: 6px solid var(--c);
+  }
+  .white.on { background: var(--c); color: #fff; transform: translateY(2px); }
+  .white.on .dot { border-top-color: transparent; }
+
+  .black {
+    position: absolute;
+    top: 0;
+    width: 8%;
+    height: 62%;
+    transform: translateX(-50%);
+    background: #1a1530;
+    border-radius: 0 0 9px 9px;
+    z-index: 2;
+    touch-action: none;
+    cursor: pointer;
+    transition: background .08s;
+  }
+  .black.on { background: var(--accent); }
+
+  p.hint { margin: 0; opacity: .7; text-align: center; font-size: 14px; max-width: 480px; }
+
+  button {
+    font: inherit;
+    font-weight: 700;
+    padding: 11px 20px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--pink));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(124,92,255,.3);
+  }
+  button.ghost { background: #fff; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  #install { display: none; }
+  #iosTip {
+    display: none;
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 14px;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(43,34,80,.12);
+  }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
+    <small>Өдөр бүр 10 минут тогло</small>
+  </div>
+
+  <div id="now">&nbsp;</div>
+
+  <div class="piano"><div class="keys" id="keys"></div></div>
+
+  <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
+
+  <div class="row">
+    <button id="demo">▶ Жишээ ая сонсох</button>
+    <button id="wave" class="ghost">Дуу: зөөлөн</button>
+    <button id="install">📲 Утсандаа суулгах</button>
+  </div>
+
+  <div id="iosTip">iPhone дээр: Safari-д <b>Хуваалцах</b> товч → <b>"Нүүр дэлгэцэд нэмэх"</b></div>
+
+<script>
+(function () {
+  // 13 notes: До (C4) ... дараагийн До (C5)
+  const NOTES = [
+    { n: "До",   f: 261.63, w: true,  c: "#FF5C5C", k: "a" },
+    { n: "До♯",  f: 277.18, w: false, k: "w" },
+    { n: "Ре",   f: 293.66, w: true,  c: "#FF9F43", k: "s" },
+    { n: "Ре♯",  f: 311.13, w: false, k: "e" },
+    { n: "Ми",   f: 329.63, w: true,  c: "#F6C915", k: "d" },
+    { n: "Фа",   f: 349.23, w: true,  c: "#2ECC71", k: "f" },
+    { n: "Фа♯",  f: 369.99, w: false, k: "t" },
+    { n: "Соль", f: 392.00, w: true,  c: "#1ABC9C", k: "g" },
+    { n: "Соль♯",f: 415.30, w: false, k: "y" },
+    { n: "Ля",   f: 440.00, w: true,  c: "#3498DB", k: "h" },
+    { n: "Ля♯",  f: 466.16, w: false, k: "u" },
+    { n: "Си",   f: 493.88, w: true,  c: "#7C5CFF", k: "j" },
+    { n: "До",   f: 523.25, w: true,  c: "#FF5C5C", k: "k" }
+  ];
+
+  const keysEl = document.getElementById("keys");
+  const nowEl = document.getElementById("now");
+  let ctx = null;
+  let wave = "triangle";
+  const active = new Map(); // element -> {osc, gain}
+  const elByKey = {};
+
+  function audio() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function start(el, note) {
+    if (active.has(el)) return;
+    const a = audio();
+    const osc = a.createOscillator();
+    const gain = a.createGain();
+    osc.type = wave;
+    osc.frequency.value = note.f;
+    gain.gain.setValueAtTime(0, a.currentTime);
+    gain.gain.linearRampToValueAtTime(0.35, a.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.18, a.currentTime + 0.4);
+    osc.connect(gain).connect(a.destination);
+    osc.start();
+    active.set(el, { osc, gain });
+    el.classList.add("on");
+    nowEl.textContent = note.n;
+  }
+
+  function stop(el) {
+    const s = active.get(el);
+    if (!s) return;
+    const a = ctx;
+    s.gain.gain.cancelScheduledValues(a.currentTime);
+    s.gain.gain.setValueAtTime(Math.max(s.gain.gain.value, 0.0001), a.currentTime);
+    s.gain.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.18);
+    s.osc.stop(a.currentTime + 0.2);
+    active.delete(el);
+    el.classList.remove("on");
+  }
+
+  // Build keys
+  let whiteIndex = 0;
+  const whiteCount = NOTES.filter(x => x.w).length;
+  NOTES.forEach(note => {
+    const el = document.createElement("div");
+    if (note.w) {
+      el.className = "white";
+      el.style.setProperty("--c", note.c);
+      el.innerHTML = '<div class="dot">' + note.n + "</div>";
+      whiteIndex++;
+    } else {
+      el.className = "black";
+      el.style.left = (whiteIndex * (100 / whiteCount)) + "%";
+    }
+    el.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      el.setPointerCapture && el.setPointerCapture(e.pointerId);
+      start(el, note);
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev =>
+      el.addEventListener(ev, () => stop(el)));
+    keysEl.appendChild(el);
+    elByKey[note.k] = { el, note };
+  });
+
+  // Computer keyboard
+  window.addEventListener("keydown", e => {
+    if (e.repeat) return;
+    const m = elByKey[e.key.toLowerCase()];
+    if (m) start(m.el, m.note);
+  });
+  window.addEventListener("keyup", e => {
+    const m = elByKey[e.key.toLowerCase()];
+    if (m) stop(m.el);
+  });
+
+  // Demo melody
+  document.getElementById("demo").addEventListener("click", async () => {
+    const seq = ["a","a","g","g","h","h","g", "f","f","d","d","s","s","a"];
+    const gaps = [1,1,1,1,1,1,2, 1,1,1,1,1,1,2];
+    for (let i = 0; i < seq.length; i++) {
+      const m = elByKey[seq[i]];
+      start(m.el, m.note);
+      await new Promise(r => setTimeout(r, 380));
+      stop(m.el);
+      await new Promise(r => setTimeout(r, 60 + (gaps[i] - 1) * 380));
+    }
+  });
+
+  // Sound type toggle
+  const waves = [["triangle", "зөөлөн"], ["sine", "цэвэр"], ["square", "тоглоомын"]];
+  let wi = 0;
+  const waveBtn = document.getElementById("wave");
+  waveBtn.addEventListener("click", () => {
+    wi = (wi + 1) % waves.length;
+    wave = waves[wi][0];
+    waveBtn.textContent = "Дуу: " + waves[wi][1];
+  });
+
+  // ---- PWA: суулгах ----
+  const installBtn = document.getElementById("install");
+  const iosTip = document.getElementById("iosTip");
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  let deferred = null;
+
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferred = e;
+    if (!standalone) installBtn.style.display = "";
+  });
+  installBtn.addEventListener("click", async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    await deferred.userChoice;
+    deferred = null;
+    installBtn.style.display = "none";
+  });
+  window.addEventListener("appinstalled", () => { installBtn.style.display = "none"; });
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS && !standalone) iosTip.style.display = "block";
+
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
