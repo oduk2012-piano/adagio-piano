@@ -1,6 +1,6 @@
 // Энгийн offline cache: нэг удаа нээсний дараа интернэтгүй ч ажиллана.
 // Файлаа өөрчилбөл CACHE нэрийн дугаарыг нэмээрэй (v1 -> v2).
-const CACHE = "piano-v6";
+const CACHE = "piano-v7";
 const FILES = [
   "./",
   "./index.html",
