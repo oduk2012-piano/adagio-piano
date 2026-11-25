@@ -21,7 +21,6 @@
     --pink: #FF5CAA;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  [hidden] { display: none !important; }
   html, body { margin: 0; min-height: 100%; }
   body {
     background:
@@ -38,6 +37,8 @@
     min-height: 100vh;
     min-height: 100dvh;
     padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    user-select: none;
+    -webkit-user-select: none;
     touch-action: manipulation;
   }
 
@@ -54,8 +55,6 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
   }
 
   .piano {
@@ -67,8 +66,6 @@
     padding: 12px 12px 16px;
     border-radius: 20px;
     box-shadow: 0 14px 34px rgba(43,34,80,.3);
-    user-select: none;
-    -webkit-user-select: none;
   }
   .keys { position: relative; flex: 1; display: flex; }
 
@@ -124,39 +121,8 @@
     cursor: pointer;
     box-shadow: 0 6px 14px rgba(124,92,255,.3);
   }
-  button:disabled { opacity: .6; cursor: default; }
   button.ghost { background: #fff; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
-  button.small { padding: 6px 14px; font-size: 14px; }
-  button.link {
-    background: none; color: var(--accent); box-shadow: none;
-    padding: 6px 8px; font-weight: 600; font-size: 14px; text-decoration: underline;
-  }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-
-  /* ---- Нээгдэх дэлгэц (splash) ---- */
-  #splash {
-    position: fixed;
-    inset: 0;
-    z-index: 99;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at 50% 45%, #0B0818 0%, #000 60%);
-    transition: opacity .8s ease;
-  }
-  #splash.hide { opacity: 0; pointer-events: none; }
-  #splash img {
-    width: min(92vw, 520px);
-    height: auto;
-    opacity: 0;
-    transform: scale(.92);
-    animation: logoIn 2s ease-out .4s forwards, glow 2.6s ease-in-out 2.4s infinite;
-  }
-  @keyframes logoIn { to { opacity: 1; transform: scale(1); } }
-  @keyframes glow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .78; transform: scale(1.02); } }
-  @media (prefers-reduced-motion: reduce) {
-    #splash img { animation: none; opacity: 1; transform: none; }
-  }
 
   #install { display: none; }
   #iosTip {
@@ -169,145 +135,28 @@
     text-align: center;
     box-shadow: 0 4px 12px rgba(43,34,80,.12);
   }
-
-  /* ---- Нэвтрэх ---- */
-  .card, .panel {
-    width: min(100%, 420px);
-    background: #fff;
-    border-radius: 22px;
-    padding: 24px 22px;
-    box-shadow: 0 14px 34px rgba(43,34,80,.16);
-  }
-  .panel { width: min(100%, 720px); }
-  .card { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .card h2, .panel h2 { margin: 0; font-size: 22px; }
-  .panel h3 { margin: 18px 0 8px; font-size: 16px; }
-  .authlogo { height: 64px; width: auto; display: block; }
-  form.stack { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
-  input, select {
-    font: inherit;
-    font-weight: 500;
-    padding: 11px 14px;
-    border: 2px solid #D9D0F5;
-    border-radius: 12px;
-    background: #FBFAFF;
-    color: var(--ink);
-    width: 100%;
-  }
-  input:focus, select:focus { outline: none; border-color: var(--accent); }
-  .msg { margin: 0; min-height: 20px; font-size: 14px; text-align: center; color: #1F7A4D; font-weight: 600; }
-  .msg.err { color: #C62E4B; }
-
-  .topbar {
-    width: min(100%, 720px);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  #who { font-weight: 700; font-size: 15px; }
-  #who small { font-weight: 600; color: var(--accent); margin-left: 6px; }
-
-  #app { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
-
-  .formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-  .formgrid .full { grid-column: 1 / -1; }
-  @media (max-width: 520px) { .formgrid { grid-template-columns: 1fr; } }
-
-  ul#userList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  ul#userList li {
-    display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 12px; background: #F4F0FF; font-size: 14px;
-  }
-  ul#userList .nm { font-weight: 700; }
-  ul#userList .em { opacity: .65; font-size: 13px; word-break: break-all; }
-  .badge {
-    flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
-    background: var(--accent); color: #fff;
-  }
 </style>
 </head>
 <body>
-  <div id="splash" aria-hidden="true"><img src="logo-glow.png" alt=""></div>
-
-  <!-- ===== Нэвтрэх дэлгэц ===== -->
-  <section id="auth" class="card" hidden>
-    <img class="authlogo" src="logo-full.png" alt="Adagio piano school">
-    <h2>Нэвтрэх</h2>
-    <form id="loginForm" class="stack">
-      <label>Имэйл
-        <input id="email" type="email" autocomplete="username" inputmode="email" required>
-      </label>
-      <label>Нууц үг
-        <input id="password" type="password" autocomplete="current-password" required>
-      </label>
-      <button type="submit" id="loginBtn">Нэвтрэх</button>
-    </form>
-    <button type="button" id="forgot" class="link">Нууц үгээ мартсан уу?</button>
-    <p id="authMsg" class="msg" role="alert"></p>
-  </section>
-
-  <!-- ===== Апп (нэвтэрсний дараа) ===== -->
-  <div id="app" hidden>
-    <div class="topbar">
-      <span id="who"></span>
-      <button type="button" id="logout" class="ghost small">Гарах</button>
-    </div>
-
-    <div class="brand">
-      <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
-      <small>Өдөр бүр 10 минут тогло</small>
-    </div>
-
-    <div id="now">&nbsp;</div>
-
-    <div class="piano"><div class="keys" id="keys"></div></div>
-
-    <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
-
-    <div class="row">
-      <button id="demo">▶ Жишээ ая сонсох</button>
-      <button id="wave" class="ghost">Дуу: зөөлөн</button>
-      <button id="install">📲 Утсандаа суулгах</button>
-    </div>
-
-    <div id="iosTip">iPhone дээр: Safari-д <b>Хуваалцах</b> товч → <b>"Нүүр дэлгэцэд нэмэх"</b></div>
-
-    <p id="roleNote" class="hint"></p>
-
-    <!-- ===== Зөвхөн админд ===== -->
-    <section id="adminPanel" class="panel" hidden>
-      <h2>Хэрэглэгч нэмэх</h2>
-      <form id="addUserForm">
-        <div class="formgrid">
-          <label>Нэр
-            <input id="nuName" type="text" maxlength="60" required>
-          </label>
-          <label>Үүрэг
-            <select id="nuRole">
-              <option value="student">Сурагч</option>
-              <option value="parent">Эцэг эх</option>
-              <option value="teacher">Багш</option>
-              <option value="admin">Админ</option>
-            </select>
-          </label>
-          <label>Имэйл
-            <input id="nuEmail" type="email" inputmode="email" autocomplete="off" required>
-          </label>
-          <label>Анхны нууц үг (6+ тэмдэгт)
-            <input id="nuPass" type="text" minlength="6" autocomplete="off" required>
-          </label>
-          <button type="submit" id="nuBtn" class="full">Нэмэх</button>
-        </div>
-      </form>
-      <p id="adminMsg" class="msg" role="status"></p>
-      <h3>Бүх хэрэглэгч (<span id="userCount">0</span>)</h3>
-      <ul id="userList"></ul>
-    </section>
+  <div class="brand">
+    <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
+    <small>Өдөр бүр 10 минут тогло</small>
   </div>
 
-<!-- ===== Пиано, нээгдэх дэлгэц, суулгах ===== -->
+  <div id="now">&nbsp;</div>
+
+  <div class="piano"><div class="keys" id="keys"></div></div>
+
+  <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
+
+  <div class="row">
+    <button id="demo">▶ Жишээ ая сонсох</button>
+    <button id="wave" class="ghost">Дуу: зөөлөн</button>
+    <button id="install">📲 Утсандаа суулгах</button>
+  </div>
+
+  <div id="iosTip">iPhone дээр: Safari-д <b>Хуваалцах</b> товч → <b>"Нүүр дэлгэцэд нэмэх"</b></div>
+
 <script>
 (function () {
   // 13 notes: До (C4) ... дараагийн До (C5)
@@ -394,13 +243,9 @@
     elByKey[note.k] = { el, note };
   });
 
-  // Computer keyboard (бичих талбар дээр ажиллахгүй)
-  function typingInField(e) {
-    const t = e.target;
-    return t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA");
-  }
+  // Computer keyboard
   window.addEventListener("keydown", e => {
-    if (e.repeat || typingInField(e)) return;
+    if (e.repeat) return;
     const m = elByKey[e.key.toLowerCase()];
     if (m) start(m.el, m.note);
   });
@@ -432,16 +277,6 @@
     waveBtn.textContent = "Дуу: " + waves[wi][1];
   });
 
-  // ---- Нээгдэх дэлгэц: ~3 секундын дараа алга болно, товшиж алгасч болно ----
-  const splash = document.getElementById("splash");
-  function hideSplash() {
-    if (!splash || splash.classList.contains("hide")) return;
-    splash.classList.add("hide");
-    setTimeout(() => splash.remove(), 900);
-  }
-  splash.addEventListener("pointerdown", hideSplash);
-  setTimeout(hideSplash, 3800);
-
   // ---- PWA: суулгах ----
   const installBtn = document.getElementById("install");
   const iosTip = document.getElementById("iosTip");
@@ -471,186 +306,6 @@
     });
   }
 })();
-</script>
-
-<!-- ===== Firebase: нэвтрэх, үүрэг, админ ===== -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
-  sendPasswordResetEmail, createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDc0-uXYvGvOEsHCYjIyDd_Qgqf6OdX4t4",
-  authDomain: "adagio-piano.firebaseapp.com",
-  projectId: "adagio-piano",
-  storageBucket: "adagio-piano.firebasestorage.app",
-  messagingSenderId: "800442094123",
-  appId: "1:800442094123:web:98d3397f1cea17b3be506e"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-// Админ шинэ хэрэглэгч үүсгэхэд өөрөө гарчихгүйн тулд тусдаа "хоёрдогч" холболт ашиглана
-const secondary = initializeApp(firebaseConfig, "secondary");
-const secondaryAuth = getAuth(secondary);
-
-const $ = id => document.getElementById(id);
-const ROLES = { admin: "Админ", teacher: "Багш", student: "Сурагч", parent: "Эцэг эх" };
-const ROLE_NOTES = {
-  teacher: "Багшийн хуудас удахгүй нэмэгдэнэ.",
-  student: "Сурагчийн хуудас удахгүй нэмэгдэнэ. Одоохондоо пиано дээр тоглоорой!",
-  parent: "Эцэг эхийн хуудас удахгүй нэмэгдэнэ."
-};
-
-function setMsg(id, text, isErr) {
-  const el = $(id);
-  el.textContent = text || "";
-  el.classList.toggle("err", !!isErr);
-}
-
-function errText(e) {
-  switch (e && e.code) {
-    case "auth/invalid-credential":
-    case "auth/wrong-password":
-    case "auth/user-not-found":
-    case "auth/invalid-login-credentials":
-      return "Имэйл эсвэл нууц үг буруу байна.";
-    case "auth/invalid-email": return "Имэйл хаяг буруу бичигдсэн байна.";
-    case "auth/too-many-requests": return "Хэт олон оролдлоо. Хэсэг хүлээгээд дахин оролдоно уу.";
-    case "auth/network-request-failed": return "Интернэт холболтоо шалгана уу.";
-    case "auth/email-already-in-use": return "Энэ имэйл аль хэдийн бүртгэлтэй байна.";
-    case "auth/weak-password": return "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.";
-    case "permission-denied":
-    case "firestore/permission-denied": return "Танд энэ үйлдлийг хийх эрх байхгүй байна.";
-    default: return "Алдаа гарлаа. Дахин оролдоно уу.";
-  }
-}
-
-function showAuth() { $("app").hidden = true; $("auth").hidden = false; }
-function showApp()  { $("auth").hidden = true; $("app").hidden = false; }
-
-// ---- Нэвтрэх ----
-$("loginForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  setMsg("authMsg", "");
-  $("loginBtn").disabled = true;
-  try {
-    await signInWithEmailAndPassword(auth, $("email").value.trim(), $("password").value);
-    $("password").value = "";
-  } catch (err) {
-    setMsg("authMsg", errText(err), true);
-  } finally {
-    $("loginBtn").disabled = false;
-  }
-});
-
-$("forgot").addEventListener("click", async () => {
-  const email = $("email").value.trim();
-  if (!email) { setMsg("authMsg", "Эхлээд имэйлээ бичнэ үү.", true); return; }
-  try {
-    await sendPasswordResetEmail(auth, email);
-    setMsg("authMsg", "Нууц үг сэргээх холбоос имэйл рүү илгээгдлээ. Spam хавтсаа бас шалгаарай.");
-  } catch (err) {
-    setMsg("authMsg", errText(err), true);
-  }
-});
-
-$("logout").addEventListener("click", () => signOut(auth));
-
-// ---- Нэвтэрсэн төлөв ----
-onAuthStateChanged(auth, async user => {
-  if (!user) { showAuth(); return; }
-  try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (!snap.exists()) {
-      setMsg("authMsg", "Таны эрх хараахан нээгдээгүй байна. Сургуулийн админтай холбогдоно уу.", true);
-      await signOut(auth);
-      return;
-    }
-    const p = snap.data();
-    const role = ROLES[p.role] ? p.role : "student";
-    $("who").textContent = "";
-    $("who").append(document.createTextNode(p.name || user.email));
-    const tag = document.createElement("small");
-    tag.textContent = ROLES[role];
-    $("who").append(tag);
-    $("roleNote").textContent = ROLE_NOTES[role] || "";
-    $("adminPanel").hidden = role !== "admin";
-    showApp();
-    if (role === "admin") loadUsers();
-  } catch (err) {
-    setMsg("authMsg", errText(err), true);
-    await signOut(auth);
-  }
-});
-
-// ---- Админ: хэрэглэгчдийн жагсаалт ----
-async function loadUsers() {
-  try {
-    const snap = await getDocs(collection(db, "users"));
-    const rows = snap.docs.map(d => d.data());
-    rows.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "mn"));
-    const list = $("userList");
-    list.textContent = "";
-    rows.forEach(u => {
-      const li = document.createElement("li");
-      const left = document.createElement("div");
-      const nm = document.createElement("div");
-      nm.className = "nm";
-      nm.textContent = u.name || "(нэргүй)";
-      const em = document.createElement("div");
-      em.className = "em";
-      em.textContent = u.email || "";
-      left.append(nm, em);
-      const badge = document.createElement("span");
-      badge.className = "badge";
-      badge.textContent = ROLES[u.role] || u.role || "";
-      li.append(left, badge);
-      list.append(li);
-    });
-    $("userCount").textContent = String(rows.length);
-  } catch (err) {
-    setMsg("adminMsg", errText(err), true);
-  }
-}
-
-// ---- Админ: хэрэглэгч нэмэх ----
-$("addUserForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  setMsg("adminMsg", "");
-  const name = $("nuName").value.trim();
-  const email = $("nuEmail").value.trim();
-  const pass = $("nuPass").value;
-  const role = $("nuRole").value;
-  if (!name || !email || pass.length < 6) {
-    setMsg("adminMsg", "Бүх талбарыг зөв бөглөнө үү.", true);
-    return;
-  }
-  $("nuBtn").disabled = true;
-  let created = false;
-  try {
-    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-    created = true;
-    await setDoc(doc(db, "users", cred.user.uid), {
-      name, email, role, createdAt: serverTimestamp()
-    });
-    setMsg("adminMsg", name + " амжилттай нэмэгдлээ. Нууц үгийг нь хэрэглэгчид хэлж өгнө үү.");
-    $("addUserForm").reset();
-    loadUsers();
-  } catch (err) {
-    const extra = created ? " (Нэвтрэх бүртгэл үүссэн ч эрх нь хадгалагдаагүй тул дахин оролдоно уу.)" : "";
-    setMsg("adminMsg", errText(err) + extra, true);
-  } finally {
-    try { await signOut(secondaryAuth); } catch (_) {}
-    $("nuBtn").disabled = false;
-  }
-});
 </script>
 </body>
 </html>
