@@ -37,15 +37,79 @@
     min-height: 100vh;
     min-height: 100dvh;
     padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-    user-select: none;
-    -webkit-user-select: none;
     touch-action: manipulation;
   }
+  .view { display: none; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+  .view.show { display: flex; }
 
   .brand { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .brand h1 { margin: 0; line-height: 0; }
   .brand img { height: 72px; width: auto; display: block; }
   .brand small { display: block; font-size: 13px; font-weight: 500; opacity: .65; }
+
+  /* ---- Нэвтрэх ---- */
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 22px;
+    width: min(100%, 380px);
+    box-shadow: 0 10px 28px rgba(43,34,80,.14);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 20px; text-align: center; }
+  label { font-size: 13px; font-weight: 600; opacity: .8; display: block; margin-bottom: 4px; }
+  input, select {
+    font: inherit;
+    width: 100%;
+    padding: 11px 12px;
+    border: 2px solid #E1DAF5;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .msg { min-height: 18px; font-size: 14px; text-align: center; }
+  .msg.err { color: #D63031; }
+  .msg.ok { color: #1E9E5A; }
+
+  /* ---- Дээд мөр ---- */
+  .topbar {
+    width: min(100%, 720px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 12px rgba(43,34,80,.1);
+  }
+  .topbar .who { font-weight: 700; }
+  .topbar .role {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .topbar button { padding: 8px 14px; font-size: 14px; }
+
+  /* ---- Админ самбар ---- */
+  .panel { width: min(100%, 720px); }
+  .panel .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .panel .grid .full { grid-column: 1 / -1; }
+  @media (max-width: 520px) { .panel .grid { grid-template-columns: 1fr; } }
+  .users { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
+  .urow {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border-radius: 10px; background: #F4F0FF; font-size: 14px;
+  }
+  .urow span:last-child { font-weight: 700; color: var(--accent); white-space: nowrap; }
 
   #now {
     min-height: 56px;
@@ -55,6 +119,8 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .piano {
@@ -66,6 +132,8 @@
     padding: 12px 12px 16px;
     border-radius: 20px;
     box-shadow: 0 14px 34px rgba(43,34,80,.3);
+    user-select: none;
+    -webkit-user-select: none;
   }
   .keys { position: relative; flex: 1; display: flex; }
 
@@ -121,8 +189,34 @@
     cursor: pointer;
     box-shadow: 0 6px 14px rgba(124,92,255,.3);
   }
+  button:disabled { opacity: .6; cursor: default; }
   button.ghost { background: #fff; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  /* ---- Нээгдэх дэлгэц (splash) ---- */
+  #splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 45%, #0B0818 0%, #000 60%);
+    transition: opacity .8s ease;
+  }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  #splash img {
+    width: min(92vw, 520px);
+    height: auto;
+    opacity: 0;
+    transform: scale(.92);
+    animation: logoIn 2s ease-out .4s forwards, glow 2.6s ease-in-out 2.4s infinite;
+  }
+  @keyframes logoIn { to { opacity: 1; transform: scale(1); } }
+  @keyframes glow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .78; transform: scale(1.02); } }
+  @media (prefers-reduced-motion: reduce) {
+    #splash img { animation: none; opacity: 1; transform: none; }
+  }
 
   #install { display: none; }
   #iosTip {
@@ -138,28 +232,93 @@
 </style>
 </head>
 <body>
-  <div class="brand">
-    <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
-    <small>Өдөр бүр 10 минут тогло</small>
+  <div id="splash" aria-hidden="true"><img src="logo-glow.png" alt=""></div>
+
+  <!-- ===== НЭВТРЭХ ХУУДАС ===== -->
+  <div id="loginView" class="view">
+    <div class="brand">
+      <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
+      <small>Өдөр бүр 10 минут тогло</small>
+    </div>
+    <form id="loginForm" class="card" autocomplete="on">
+      <h2>Нэвтрэх</h2>
+      <div>
+        <label for="loginEmail">Имэйл</label>
+        <input id="loginEmail" type="email" autocomplete="username" required>
+      </div>
+      <div>
+        <label for="loginPass">Нууц үг</label>
+        <input id="loginPass" type="password" autocomplete="current-password" required>
+      </div>
+      <div id="loginMsg" class="msg err"></div>
+      <button id="loginBtn" type="submit">Нэвтрэх</button>
+    </form>
   </div>
 
-  <div id="now">&nbsp;</div>
+  <!-- ===== АПП (нэвтэрсний дараа) ===== -->
+  <div id="appView" class="view">
+    <div class="topbar">
+      <div><span class="who" id="whoName"></span><span class="role" id="whoRole"></span></div>
+      <button id="logoutBtn" class="ghost" type="button">Гарах</button>
+    </div>
 
-  <div class="piano"><div class="keys" id="keys"></div></div>
+    <div id="noRole" class="card" style="display:none">
+      <h2>Эрх тохируулагдаагүй</h2>
+      <p style="margin:0;text-align:center">Таны бүртгэл админаас эрх авах хүртэл хүлээнэ үү.</p>
+    </div>
 
-  <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
+    <!-- Зөвхөн админд харагдана -->
+    <div id="adminPanel" class="panel card" style="display:none">
+      <h2>Хэрэглэгч нэмэх</h2>
+      <form id="addForm" class="grid" autocomplete="off">
+        <div>
+          <label for="newName">Нэр</label>
+          <input id="newName" type="text" required>
+        </div>
+        <div>
+          <label for="newRole">Эрх</label>
+          <select id="newRole">
+            <option value="student">Сурагч</option>
+            <option value="parent">Эцэг эх</option>
+            <option value="teacher">Багш</option>
+            <option value="admin">Админ</option>
+          </select>
+        </div>
+        <div>
+          <label for="newEmail">Имэйл</label>
+          <input id="newEmail" type="email" required>
+        </div>
+        <div>
+          <label for="newPass">Нууц үг (6+ тэмдэгт)</label>
+          <input id="newPass" type="text" minlength="6" required>
+        </div>
+        <div class="full">
+          <div id="addMsg" class="msg"></div>
+          <button id="addBtn" type="submit" style="width:100%">Нэмэх</button>
+        </div>
+      </form>
+      <h2 style="margin-top:10px">Бүх хэрэглэгч</h2>
+      <div id="userList" class="users"></div>
+    </div>
 
-  <div class="row">
-    <button id="demo">▶ Жишээ ая сонсох</button>
-    <button id="wave" class="ghost">Дуу: зөөлөн</button>
-    <button id="install">📲 Утсандаа суулгах</button>
+    <div id="now">&nbsp;</div>
+
+    <div class="piano"><div class="keys" id="keys"></div></div>
+
+    <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
+
+    <div class="row">
+      <button id="demo">▶ Жишээ ая сонсох</button>
+      <button id="wave" class="ghost">Дуу: зөөлөн</button>
+      <button id="install">📲 Утсандаа суулгах</button>
+    </div>
+
+    <div id="iosTip">iPhone дээр: Safari-д <b>Хуваалцах</b> товч → <b>"Нүүр дэлгэцэд нэмэх"</b></div>
   </div>
 
-  <div id="iosTip">iPhone дээр: Safari-д <b>Хуваалцах</b> товч → <b>"Нүүр дэлгэцэд нэмэх"</b></div>
-
+<!-- ===== ПИАНО (хуучин код хэвээр) ===== -->
 <script>
 (function () {
-  // 13 notes: До (C4) ... дараагийн До (C5)
   const NOTES = [
     { n: "До",   f: 261.63, w: true,  c: "#FF5C5C", k: "a" },
     { n: "До♯",  f: 277.18, w: false, k: "w" },
@@ -180,7 +339,7 @@
   const nowEl = document.getElementById("now");
   let ctx = null;
   let wave = "triangle";
-  const active = new Map(); // element -> {osc, gain}
+  const active = new Map();
   const elByKey = {};
 
   function audio() {
@@ -218,7 +377,6 @@
     el.classList.remove("on");
   }
 
-  // Build keys
   let whiteIndex = 0;
   const whiteCount = NOTES.filter(x => x.w).length;
   NOTES.forEach(note => {
@@ -243,18 +401,22 @@
     elByKey[note.k] = { el, note };
   });
 
-  // Computer keyboard
+  // Компьютерийн гар (бичиж байх үед пиано дуугарахгүй)
+  function typing(e) {
+    const t = e.target && e.target.tagName;
+    return t === "INPUT" || t === "SELECT" || t === "TEXTAREA";
+  }
   window.addEventListener("keydown", e => {
-    if (e.repeat) return;
+    if (e.repeat || typing(e)) return;
     const m = elByKey[e.key.toLowerCase()];
     if (m) start(m.el, m.note);
   });
   window.addEventListener("keyup", e => {
+    if (typing(e)) return;
     const m = elByKey[e.key.toLowerCase()];
     if (m) stop(m.el);
   });
 
-  // Demo melody
   document.getElementById("demo").addEventListener("click", async () => {
     const seq = ["a","a","g","g","h","h","g", "f","f","d","d","s","s","a"];
     const gaps = [1,1,1,1,1,1,2, 1,1,1,1,1,1,2];
@@ -267,7 +429,6 @@
     }
   });
 
-  // Sound type toggle
   const waves = [["triangle", "зөөлөн"], ["sine", "цэвэр"], ["square", "тоглоомын"]];
   let wi = 0;
   const waveBtn = document.getElementById("wave");
@@ -277,7 +438,17 @@
     waveBtn.textContent = "Дуу: " + waves[wi][1];
   });
 
-  // ---- PWA: суулгах ----
+  // Нээгдэх дэлгэц
+  const splash = document.getElementById("splash");
+  function hideSplash() {
+    if (!splash || splash.classList.contains("hide")) return;
+    splash.classList.add("hide");
+    setTimeout(() => splash.remove(), 900);
+  }
+  splash.addEventListener("pointerdown", hideSplash);
+  setTimeout(hideSplash, 3800);
+
+  // PWA: суулгах
   const installBtn = document.getElementById("install");
   const iosTip = document.getElementById("iosTip");
   const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -306,6 +477,177 @@
     });
   }
 })();
+</script>
+
+<!-- ===== FIREBASE: нэвтрэлт, эрх, админ самбар ===== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDc0-uXYvGvOEsHCYjIyDd_Qgqf6OdX4t4",
+  authDomain: "adagio-piano.firebaseapp.com",
+  projectId: "adagio-piano",
+  storageBucket: "adagio-piano.firebasestorage.app",
+  messagingSenderId: "800442094123",
+  appId: "1:800442094123:web:98d3397f1cea17b3be506e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ROLE_LABEL = { admin: "Админ", teacher: "Багш", student: "Сурагч", parent: "Эцэг эх" };
+
+const $ = id => document.getElementById(id);
+const loginView = $("loginView"), appView = $("appView");
+
+function show(view) {
+  loginView.classList.toggle("show", view === "login");
+  appView.classList.toggle("show", view === "app");
+}
+
+function authError(code) {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/invalid-email":
+      return "Имэйл эсвэл нууц үг буруу байна.";
+    case "auth/too-many-requests":
+      return "Хэт олон оролдлоо. Хэсэг хүлээгээд дахин оролдоно уу.";
+    case "auth/network-request-failed":
+      return "Интернэт холболтоо шалгана уу.";
+    case "auth/email-already-in-use":
+      return "Энэ имэйл аль хэдийн бүртгэлтэй байна.";
+    case "auth/weak-password":
+      return "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.";
+    default:
+      return "Алдаа гарлаа (" + code + ").";
+  }
+}
+
+// ---- Нэвтрэх ----
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("loginMsg"), btn = $("loginBtn");
+  msg.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Нэвтэрч байна...";
+  try {
+    await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPass").value);
+  } catch (err) {
+    msg.textContent = authError(err.code);
+  }
+  btn.disabled = false;
+  btn.textContent = "Нэвтрэх";
+});
+
+$("logoutBtn").addEventListener("click", () => signOut(auth));
+
+// ---- Нэвтэрсэн төлөв ----
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    $("adminPanel").style.display = "none";
+    $("loginPass").value = "";
+    show("login");
+    return;
+  }
+
+  let profile = null;
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) profile = snap.data();
+  } catch (err) {
+    console.error(err);
+  }
+
+  show("app");
+  const role = profile && profile.role;
+  $("whoName").textContent = (profile && profile.name) || user.email;
+  $("whoRole").textContent = ROLE_LABEL[role] || "—";
+  $("whoRole").style.display = role ? "" : "none";
+  $("noRole").style.display = role ? "none" : "";
+  $("adminPanel").style.display = role === "admin" ? "" : "none";
+
+  if (role === "admin") loadUsers();
+});
+
+// ---- Админ: хэрэглэгчийн жагсаалт ----
+async function loadUsers() {
+  const list = $("userList");
+  list.textContent = "Уншиж байна...";
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    list.textContent = "";
+    rows.forEach(u => {
+      const row = document.createElement("div");
+      row.className = "urow";
+      const left = document.createElement("span");
+      left.textContent = (u.name || "—") + " · " + (u.email || "");
+      const right = document.createElement("span");
+      right.textContent = ROLE_LABEL[u.role] || u.role || "";
+      row.append(left, right);
+      list.appendChild(row);
+    });
+    if (!rows.length) list.textContent = "Хэрэглэгч алга.";
+  } catch (err) {
+    list.textContent = "Жагсаалт уншиж чадсангүй.";
+    console.error(err);
+  }
+}
+
+// ---- Админ: шинэ хэрэглэгч нэмэх ----
+// Хоёр дахь Firebase app ашиглана: админ өөрөө гарч мөргүй шинэ хэрэглэгч үүснэ.
+let secondaryAuth = null;
+function getSecondaryAuth() {
+  if (!secondaryAuth) {
+    const secApp = initializeApp(firebaseConfig, "secondary");
+    secondaryAuth = getAuth(secApp);
+  }
+  return secondaryAuth;
+}
+
+$("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("addMsg"), btn = $("addBtn");
+  const name = $("newName").value.trim();
+  const email = $("newEmail").value.trim();
+  const pass = $("newPass").value;
+  const role = $("newRole").value;
+
+  msg.className = "msg";
+  msg.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Нэмж байна...";
+
+  try {
+    const sAuth = getSecondaryAuth();
+    const cred = await createUserWithEmailAndPassword(sAuth, email, pass);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      name, email, role, createdAt: serverTimestamp()
+    });
+    await signOut(sAuth);
+    msg.className = "msg ok";
+    msg.textContent = "Нэмэгдлээ: " + name + " (" + ROLE_LABEL[role] + ")";
+    $("addForm").reset();
+    loadUsers();
+  } catch (err) {
+    msg.className = "msg err";
+    msg.textContent = authError(err.code || "unknown");
+    console.error(err);
+  }
+  btn.disabled = false;
+  btn.textContent = "Нэмэх";
+});
 </script>
 </body>
 </html>
