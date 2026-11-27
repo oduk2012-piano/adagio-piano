@@ -1,20 +1,8 @@
-// Энгийн offline cache: нэг удаа нээсний дараа интернэтгүй ч ажиллана.
-// Файлаа өөрчилбөл CACHE нэрийн дугаарыг нэмээрэй (v1 -> v2).
-const CACHE = "piano-v7";
-const FILES = [
-  "./",
-  "./index.html",
-  "./logo-full.png",
-  "./logo-glow.png",
-  "./manifest.webmanifest",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./icon-maskable-512.png",
-  "./apple-touch-icon.png"
-];
+// Adagio Piano School service worker
+// Сүлжээнээс эхлээд шинэ хувилбарыг авна, интернэт байхгүй бол хадгалсан хувилбарыг ашиглана.
+const CACHE = "adagio-v2";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)));
   self.skipWaiting();
 });
 
@@ -28,8 +16,20 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
+  const req = e.request;
+  if (req.method !== "GET") return;
+
+  const url = new URL(req.url);
+  // Firebase болон бусад гадаад хүсэлтийг хөндөхгүй
+  if (url.origin !== self.location.origin) return;
+
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request))
+    fetch(req)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
