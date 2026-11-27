@@ -120,6 +120,7 @@
   .assign select { padding: 8px 10px; font-size: 14px; }
   .assign .st { grid-column: 1 / -1; font-size: 12px; min-height: 14px; color: #1E9E5A; }
   .assign .st.err { color: #D63031; }
+  button.del { align-self: flex-end; margin-top: 8px; padding: 6px 14px; font-size: 13px; color: #D63031; border-color: #D63031; }
 
   /* ---- Багш / Сурагч / Эцэг эхийн нүүр ---- */
   .home { width: min(100%, 720px); }
@@ -281,6 +282,7 @@
       </div>
       <div id="loginMsg" class="msg err"></div>
       <button id="loginBtn" type="submit">Нэвтрэх</button>
+      <button id="forgotBtn" class="ghost" type="button">Нууц үгээ мартсан уу?</button>
     </form>
   </div>
 
@@ -532,10 +534,11 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, serverTimestamp
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -585,6 +588,7 @@ function authError(code) {
 $("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
   const msg = $("loginMsg"), btn = $("loginBtn");
+  msg.className = "msg err";
   msg.textContent = "";
   btn.disabled = true;
   btn.textContent = "Нэвтэрч байна...";
@@ -595,6 +599,25 @@ $("loginForm").addEventListener("submit", async e => {
   }
   btn.disabled = false;
   btn.textContent = "Нэвтрэх";
+});
+
+// ---- Нууц үг сэргээх ----
+$("forgotBtn").addEventListener("click", async () => {
+  const msg = $("loginMsg");
+  const email = $("loginEmail").value.trim();
+  if (!email) {
+    msg.className = "msg err";
+    msg.textContent = "Дээрх талбарт имэйлээ бичээд дахин дарна уу.";
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    msg.className = "msg ok";
+    msg.textContent = "Нууц үг сэргээх захиа илгээлээ. Имэйлээ (Spam хавтсыг хамт) шалгана уу.";
+  } catch (err) {
+    msg.className = "msg err";
+    msg.textContent = authError(err.code || "unknown");
+  }
 });
 
 $("logoutBtn").addEventListener("click", () => signOut(auth));
@@ -787,6 +810,27 @@ async function loadUsers() {
         pWrap.append(pSel);
         box.append(tWrap, pWrap, st);
         row.append(box);
+      }
+
+      // Устгах: Firestore профайлыг устгаж эрхийг хаана
+      const me = auth.currentUser && auth.currentUser.uid;
+      if (u.id !== me) {
+        const del = el("button", "ghost del", "Устгах");
+        del.type = "button";
+        del.addEventListener("click", async () => {
+          const label = (u.name || u.email || "энэ хэрэглэгч");
+          if (!confirm(label + " хэрэглэгчийг устгах уу? Нэвтрэх эрх нь хаагдана.")) return;
+          del.disabled = true;
+          try {
+            await deleteDoc(doc(db, "users", u.id));
+            loadUsers();
+          } catch (err) {
+            del.disabled = false;
+            alert("Устгаж чадсангүй.");
+            console.error(err);
+          }
+        });
+        row.append(del);
       }
       list.appendChild(row);
     });
