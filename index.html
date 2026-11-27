@@ -110,6 +110,35 @@
     padding: 8px 10px; border-radius: 10px; background: #F4F0FF; font-size: 14px;
   }
   .urow span:last-child { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .users { max-height: 360px; }
+  .urow.col { flex-direction: column; align-items: stretch; }
+  .urow .top { display: flex; justify-content: space-between; gap: 8px; }
+  .urow .top span:last-child { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .assign { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  @media (max-width: 520px) { .assign { grid-template-columns: 1fr; } }
+  .assign label { font-size: 12px; margin-bottom: 2px; }
+  .assign select { padding: 8px 10px; font-size: 14px; }
+  .assign .st { grid-column: 1 / -1; font-size: 12px; min-height: 14px; color: #1E9E5A; }
+  .assign .st.err { color: #D63031; }
+
+  /* ---- Багш / Сурагч / Эцэг эхийн нүүр ---- */
+  .home { width: min(100%, 720px); }
+  .home h2 { margin: 0 0 4px; font-size: 20px; }
+  .home .sub { margin: 0; font-size: 14px; opacity: .7; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .item {
+    background: #F4F0FF; border-radius: 12px; padding: 10px 12px; font-size: 14px;
+    display: flex; justify-content: space-between; gap: 10px; align-items: center;
+  }
+  .item b { font-size: 15px; }
+  .item small { display: block; opacity: .7; margin-top: 2px; }
+  .tag {
+    font-size: 12px; font-weight: 700; color: #fff; background: var(--accent);
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .tag.soft { background: #fff; color: var(--accent); border: 2px solid var(--accent); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
+  .kv span:nth-child(odd) { opacity: .65; }
 
   #now {
     min-height: 56px;
@@ -265,6 +294,26 @@
     <div id="noRole" class="card" style="display:none">
       <h2>Эрх тохируулагдаагүй</h2>
       <p style="margin:0;text-align:center">Таны бүртгэл админаас эрх авах хүртэл хүлээнэ үү.</p>
+    </div>
+
+    <!-- Багшид харагдана -->
+    <div id="teacherPanel" class="home card" style="display:none">
+      <h2>Сурагчид</h2>
+      <p class="sub" id="teacherSub"></p>
+      <div id="teacherList" class="list"></div>
+    </div>
+
+    <!-- Сурагчид харагдана -->
+    <div id="studentPanel" class="home card" style="display:none">
+      <h2>Миний мэдээлэл</h2>
+      <div class="kv" id="studentInfo"></div>
+    </div>
+
+    <!-- Эцэг эхэд харагдана -->
+    <div id="parentPanel" class="home card" style="display:none">
+      <h2>Миний хүүхдүүд</h2>
+      <p class="sub" id="parentSub"></p>
+      <div id="parentList" class="list"></div>
     </div>
 
     <!-- Зөвхөн админд харагдана -->
@@ -486,7 +535,7 @@ import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp
+  getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -574,9 +623,91 @@ onAuthStateChanged(auth, async user => {
   $("whoRole").style.display = role ? "" : "none";
   $("noRole").style.display = role ? "none" : "";
   $("adminPanel").style.display = role === "admin" ? "" : "none";
+  $("teacherPanel").style.display = role === "teacher" ? "" : "none";
+  $("studentPanel").style.display = role === "student" ? "" : "none";
+  $("parentPanel").style.display = role === "parent" ? "" : "none";
 
   if (role === "admin") loadUsers();
+  if (role === "teacher") loadTeacherHome(user.uid);
+  if (role === "student") renderStudentHome(profile);
+  if (role === "parent") loadParentHome(user.uid);
 });
+
+// ---- Туслах ----
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+// ---- Багшийн нүүр: бүх сурагчийг харна ----
+async function loadTeacherHome(uid) {
+  const list = $("teacherList"), sub = $("teacherSub");
+  list.textContent = "Уншиж байна...";
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
+    const rows = [];
+    snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
+    rows.sort((a, b) =>
+      (b.teacherId === uid) - (a.teacherId === uid) || (a.name || "").localeCompare(b.name || ""));
+    const mine = rows.filter(r => r.teacherId === uid).length;
+    sub.textContent = "Нийт " + rows.length + " сурагч, үүнээс таны үндсэн сурагч " + mine + ".";
+    list.textContent = "";
+    rows.forEach(r => {
+      const it = el("div", "item");
+      const left = el("div");
+      left.append(el("b", null, r.name || "—"));
+      left.append(el("small", null,
+        "Багш: " + (r.teacherName || "—") + " · Эцэг эх: " + (r.parentName || "—")));
+      it.append(left);
+      if (r.teacherId === uid) it.append(el("span", "tag", "Миний сурагч"));
+      list.appendChild(it);
+    });
+    if (!rows.length) list.textContent = "Сурагч алга.";
+  } catch (err) {
+    list.textContent = "Жагсаалт уншиж чадсангүй.";
+    console.error(err);
+  }
+}
+
+// ---- Сурагчийн нүүр ----
+function renderStudentHome(p) {
+  const box = $("studentInfo");
+  box.textContent = "";
+  const rows = [
+    ["Нэр", (p && p.name) || "—"],
+    ["Үндсэн багш", (p && p.teacherName) || "Тохируулаагүй"],
+    ["Эцэг эх", (p && p.parentName) || "Тохируулаагүй"]
+  ];
+  rows.forEach(r => { box.append(el("span", null, r[0]), el("span", null, r[1])); });
+}
+
+// ---- Эцэг эхийн нүүр: өөрийн хүүхдүүд ----
+async function loadParentHome(uid) {
+  const list = $("parentList"), sub = $("parentSub");
+  list.textContent = "Уншиж байна...";
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("parentId", "==", uid)));
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    sub.textContent = rows.length ? "Бүртгэлтэй хүүхэд: " + rows.length : "";
+    list.textContent = "";
+    rows.forEach(r => {
+      const it = el("div", "item");
+      const left = el("div");
+      left.append(el("b", null, r.name || "—"));
+      left.append(el("small", null, "Багш: " + (r.teacherName || "Тохируулаагүй")));
+      it.append(left);
+      list.appendChild(it);
+    });
+    if (!rows.length) list.textContent = "Танд хүүхэд холбогдоогүй байна. Админтай холбогдоно уу.";
+  } catch (err) {
+    list.textContent = "Жагсаалт уншиж чадсангүй.";
+    console.error(err);
+  }
+}
 
 // ---- Админ: хэрэглэгчийн жагсаалт ----
 async function loadUsers() {
@@ -585,17 +716,78 @@ async function loadUsers() {
   try {
     const snap = await getDocs(collection(db, "users"));
     const rows = [];
-    snap.forEach(d => rows.push(d.data()));
+    snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
     rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const teachers = rows.filter(r => r.role === "teacher");
+    const parents = rows.filter(r => r.role === "parent");
+    const kids = {};
+    rows.forEach(r => { if (r.parentId) kids[r.parentId] = (kids[r.parentId] || 0) + 1; });
+
     list.textContent = "";
     rows.forEach(u => {
-      const row = document.createElement("div");
-      row.className = "urow";
-      const left = document.createElement("span");
-      left.textContent = (u.name || "—") + " · " + (u.email || "");
-      const right = document.createElement("span");
-      right.textContent = ROLE_LABEL[u.role] || u.role || "";
-      row.append(left, right);
+      const row = el("div", "urow col");
+      const top = el("div", "top");
+      top.append(el("span", null, (u.name || "—") + " · " + (u.email || "")),
+                 el("span", null, ROLE_LABEL[u.role] || u.role || ""));
+      row.append(top);
+
+      if (u.role === "parent") {
+        row.append(el("small", null, "Хүүхэд: " + (kids[u.id] || 0) + " / 4"));
+      }
+
+      if (u.role === "student") {
+        const box = el("div", "assign");
+        const tWrap = el("div"), pWrap = el("div");
+        tWrap.append(el("label", null, "Үндсэн багш"));
+        pWrap.append(el("label", null, "Эцэг эх"));
+
+        const tSel = el("select");
+        tSel.append(new Option("— тохируулаагүй —", ""));
+        teachers.forEach(t => tSel.append(new Option(t.name || t.email, t.id)));
+        tSel.value = u.teacherId || "";
+
+        const pSel = el("select");
+        pSel.append(new Option("— тохируулаагүй —", ""));
+        parents.forEach(p => pSel.append(new Option(p.name || p.email, p.id)));
+        pSel.value = u.parentId || "";
+
+        const st = el("div", "st");
+
+        async function save() {
+          const t = teachers.find(x => x.id === tSel.value);
+          const p = parents.find(x => x.id === pSel.value);
+          // Нэг эцэг эхэд 4-өөс олон хүүхэд холбохгүй
+          if (p && p.id !== u.parentId && (kids[p.id] || 0) >= 4) {
+            st.className = "st err";
+            st.textContent = "Энэ эцэг эхэд аль хэдийн 4 хүүхэд холбогдсон.";
+            pSel.value = u.parentId || "";
+            return;
+          }
+          st.className = "st";
+          st.textContent = "Хадгалж байна...";
+          try {
+            await updateDoc(doc(db, "users", u.id), {
+              teacherId: t ? t.id : "", teacherName: t ? (t.name || t.email) : "",
+              parentId: p ? p.id : "", parentName: p ? (p.name || p.email) : ""
+            });
+            if (u.parentId) kids[u.parentId] = Math.max(0, (kids[u.parentId] || 1) - 1);
+            if (p) kids[p.id] = (kids[p.id] || 0) + 1;
+            u.teacherId = t ? t.id : "";
+            u.parentId = p ? p.id : "";
+            st.textContent = "Хадгалагдлаа";
+          } catch (err) {
+            st.className = "st err";
+            st.textContent = "Хадгалж чадсангүй.";
+            console.error(err);
+          }
+        }
+        tSel.addEventListener("change", save);
+        pSel.addEventListener("change", save);
+        tWrap.append(tSel);
+        pWrap.append(pSel);
+        box.append(tWrap, pWrap, st);
+        row.append(box);
+      }
       list.appendChild(row);
     });
     if (!rows.length) list.textContent = "Хэрэглэгч алга.";
