@@ -17,15 +17,32 @@
   :root {
     --bg: #F4F0FF;
     --ink: #2B2250;
+    --card: #fff;
+    --soft: #F4F0FF;
+    --line: #E1DAF5;
+    --g1: #E4DAFF;
+    --g2: #FFD9EC;
+    --note: rgba(124,92,255,.30);
     --accent: #7C5CFF;
     --pink: #FF5CAA;
+  }
+  :root[data-theme="dark"] {
+    --bg: #120E26;
+    --ink: #EDE9FF;
+    --card: #1E1940;
+    --soft: #2A2450;
+    --line: #3A3366;
+    --g1: #2B1F63;
+    --g2: #4A1F52;
+    --note: rgba(190,170,255,.34);
+    color-scheme: dark;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; min-height: 100%; }
   body {
     background:
-      radial-gradient(circle at 15% 0%, #E4DAFF 0, transparent 45%),
-      radial-gradient(circle at 100% 100%, #FFD9EC 0, transparent 40%),
+      radial-gradient(circle at 15% 0%, var(--g1) 0, transparent 45%),
+      radial-gradient(circle at 100% 100%, var(--g2) 0, transparent 40%),
       var(--bg);
     color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -49,7 +66,7 @@
 
   /* ---- Нэвтрэх ---- */
   .card {
-    background: #fff;
+    background: var(--card);
     border-radius: 20px;
     padding: 22px;
     width: min(100%, 380px);
@@ -64,9 +81,9 @@
     font: inherit;
     width: 100%;
     padding: 11px 12px;
-    border: 2px solid #E1DAF5;
+    border: 2px solid var(--line);
     border-radius: 12px;
-    background: #fff;
+    background: var(--card);
     color: var(--ink);
   }
   input:focus, select:focus { outline: none; border-color: var(--accent); }
@@ -81,7 +98,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    background: #fff;
+    background: var(--card);
     border-radius: 16px;
     padding: 10px 14px;
     box-shadow: 0 4px 12px rgba(43,34,80,.1);
@@ -107,7 +124,7 @@
   .users { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
   .urow {
     display: flex; justify-content: space-between; gap: 8px;
-    padding: 8px 10px; border-radius: 10px; background: #F4F0FF; font-size: 14px;
+    padding: 8px 10px; border-radius: 10px; background: var(--soft); font-size: 14px;
   }
   .urow span:last-child { font-weight: 700; color: var(--accent); white-space: nowrap; }
   .users { max-height: 360px; }
@@ -128,7 +145,7 @@
   .home .sub { margin: 0; font-size: 14px; opacity: .7; }
   .list { display: flex; flex-direction: column; gap: 8px; }
   .item {
-    background: #F4F0FF; border-radius: 12px; padding: 10px 12px; font-size: 14px;
+    background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 14px;
     display: flex; justify-content: space-between; gap: 10px; align-items: center;
   }
   .item b { font-size: 15px; }
@@ -137,7 +154,7 @@
     font-size: 12px; font-weight: 700; color: #fff; background: var(--accent);
     padding: 3px 10px; border-radius: 999px; white-space: nowrap;
   }
-  .tag.soft { background: #fff; color: var(--accent); border: 2px solid var(--accent); }
+  .tag.soft { background: var(--card); color: var(--accent); border: 2px solid var(--accent); }
   .avatar {
     width: 40px; height: 40px; border-radius: 50%; flex: none; object-fit: cover;
     background: linear-gradient(135deg, var(--accent), var(--pink)); color: #fff;
@@ -147,12 +164,36 @@
   .item .who2 { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .me { display: flex; align-items: center; gap: 10px; cursor: pointer; position: relative; }
   .me .cam {
-    position: absolute; left: 36px; bottom: -2px; background: #fff; border-radius: 50%;
+    position: absolute; left: 36px; bottom: -2px; background: var(--card); border-radius: 50%;
     width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center;
     justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.25);
   }
   #photoMsg { font-size: 12px; min-height: 14px; text-align: center; }
-  details.grp { background: #fff; border: 2px solid #E1DAF5; border-radius: 14px; padding: 8px 10px; }
+  /* ---- Хөдөлдөг хөгжмийн нот ---- */
+  #notes { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  #notes span {
+    position: absolute; bottom: -60px; color: var(--note); font-weight: 700;
+    animation: floatUp linear infinite; will-change: transform, opacity;
+  }
+  @keyframes floatUp {
+    0%   { transform: translate3d(0, 0, 0) rotate(-12deg); opacity: 0; }
+    10%  { opacity: 1; }
+    50%  { transform: translate3d(var(--dx), -55vh, 0) rotate(10deg); }
+    90%  { opacity: 1; }
+    100% { transform: translate3d(calc(var(--dx) * -1), -115vh, 0) rotate(-10deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { #notes { display: none; } }
+  .view, .topbar, .home, .panel, .card, .piano, .brand, #now, p.hint, .row, #iosTip { position: relative; z-index: 1; }
+
+  /* ---- Өдөр / шөнийн горим ---- */
+  :root[data-theme="dark"] .brand img { filter: brightness(0) invert(1); }
+  #themeBtn {
+    position: fixed; top: max(12px, env(safe-area-inset-top)); right: 12px; z-index: 50;
+    width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px; line-height: 1;
+    background: var(--card); color: var(--ink); border: 2px solid var(--line);
+    box-shadow: 0 4px 12px rgba(43,34,80,.18);
+  }
+  details.grp { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 8px 10px; }
   details.grp > summary {
     cursor: pointer; font-weight: 700; display: flex; justify-content: space-between;
     align-items: center; gap: 10px; list-style: none; padding: 4px 2px;
@@ -241,7 +282,7 @@
     box-shadow: 0 6px 14px rgba(124,92,255,.3);
   }
   button:disabled { opacity: .6; cursor: default; }
-  button.ghost { background: #fff; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
+  button.ghost { background: var(--card); color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
   /* ---- Нээгдэх дэлгэц (splash) ---- */
@@ -272,7 +313,7 @@
   #install { display: none; }
   #iosTip {
     display: none;
-    background: #fff;
+    background: var(--card);
     border-radius: 14px;
     padding: 10px 14px;
     font-size: 14px;
@@ -283,13 +324,15 @@
 </style>
 </head>
 <body>
+  <div id="notes" aria-hidden="true"></div>
+  <button id="themeBtn" type="button" aria-label="Өдөр / шөнийн горим">🌙</button>
   <div id="splash" aria-hidden="true"><img src="logo-glow.png" alt=""></div>
 
   <!-- ===== НЭВТРЭХ ХУУДАС ===== -->
   <div id="loginView" class="view">
     <div class="brand">
       <h1><img src="logo-full.png" alt="Adagio piano school"></h1>
-      <small>Өдөр бүр 10 минут тогло</small>
+      <small>Хөгжим таныг сүүдэртэй бүхнээс хамгаална</small>
     </div>
     <form id="loginForm" class="card" autocomplete="on">
       <h2>Нэвтрэх</h2>
@@ -1054,6 +1097,43 @@ $("addForm").addEventListener("submit", async e => {
   btn.disabled = false;
   btn.textContent = "Нэмэх";
 });
+</script>
+<script>
+(function () {
+  // ---- Өдөр / шөнийн горим ----
+  const root = document.documentElement;
+  const btn = document.getElementById("themeBtn");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  let saved = null;
+  try { saved = localStorage.getItem("adagio-theme"); } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  function apply(mode) {
+    root.setAttribute("data-theme", mode);
+    btn.textContent = mode === "dark" ? "☀️" : "🌙";
+    if (meta) meta.setAttribute("content", mode === "dark" ? "#120E26" : "#7C5CFF");
+  }
+  apply(saved || (prefersDark ? "dark" : "light"));
+  btn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("adagio-theme", next); } catch (e) {}
+  });
+
+  // ---- Хөдөлдөг хөгжмийн нот ----
+  const box = document.getElementById("notes");
+  const glyphs = ["♪", "♫", "♩", "♬", "𝄞"];
+  const count = window.innerWidth < 600 ? 14 : 24;
+  for (let i = 0; i < count; i++) {
+    const n = document.createElement("span");
+    n.textContent = glyphs[i % glyphs.length];
+    n.style.left = (Math.random() * 96) + "%";
+    n.style.fontSize = (22 + Math.random() * 34) + "px";
+    n.style.setProperty("--dx", (Math.random() * 80 - 40) + "px");
+    n.style.animationDuration = (11 + Math.random() * 12) + "s";
+    n.style.animationDelay = (-Math.random() * 20) + "s";
+    box.appendChild(n);
+  }
+})();
 </script>
 </body>
 </html>
