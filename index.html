@@ -138,6 +138,27 @@
     padding: 3px 10px; border-radius: 999px; white-space: nowrap;
   }
   .tag.soft { background: #fff; color: var(--accent); border: 2px solid var(--accent); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; flex: none; object-fit: cover;
+    background: linear-gradient(135deg, var(--accent), var(--pink)); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;
+  }
+  .avatar.big { width: 52px; height: 52px; font-size: 20px; }
+  .item .who2 { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .me { display: flex; align-items: center; gap: 10px; cursor: pointer; position: relative; }
+  .me .cam {
+    position: absolute; left: 36px; bottom: -2px; background: #fff; border-radius: 50%;
+    width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  #photoMsg { font-size: 12px; min-height: 14px; text-align: center; }
+  details.grp { background: #fff; border: 2px solid #E1DAF5; border-radius: 14px; padding: 8px 10px; }
+  details.grp > summary {
+    cursor: pointer; font-weight: 700; display: flex; justify-content: space-between;
+    align-items: center; gap: 10px; list-style: none; padding: 4px 2px;
+  }
+  details.grp > summary::-webkit-details-marker { display: none; }
+  details.grp > .list { margin-top: 8px; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
   .kv span:nth-child(odd) { opacity: .65; }
 
@@ -289,9 +310,15 @@
   <!-- ===== АПП (нэвтэрсний дараа) ===== -->
   <div id="appView" class="view">
     <div class="topbar">
-      <div><span class="who" id="whoName"></span><span class="role" id="whoRole"></span></div>
+      <div class="me" id="meBox" title="Зургаа солих">
+        <span id="meAvatar"></span><span class="cam">📷</span>
+        <div><span class="who" id="whoName"></span><span class="role" id="whoRole"></span></div>
+        <input id="photoInput" type="file" accept="image/*" style="display:none">
+      </div>
       <button id="logoutBtn" class="ghost" type="button">Гарах</button>
     </div>
+
+    <div id="photoMsg"></div>
 
     <div id="noRole" class="card" style="display:none">
       <h2>Эрх тохируулагдаагүй</h2>
@@ -348,7 +375,9 @@
           <button id="addBtn" type="submit" style="width:100%">Нэмэх</button>
         </div>
       </form>
-      <h2 style="margin-top:10px">Бүх хэрэглэгч</h2>
+      <h2 style="margin-top:10px">Багш бүрийн бүлэг</h2>
+      <div id="groupView" class="list"></div>
+      <h2 style="margin-top:10px">Бүх хэрэглэгч (засах, устгах)</h2>
       <div id="userList" class="users"></div>
     </div>
 
@@ -640,6 +669,8 @@ onAuthStateChanged(auth, async user => {
   }
 
   show("app");
+  myProfile = profile;
+  paintMe();
   const role = profile && profile.role;
   $("whoName").textContent = (profile && profile.name) || user.email;
   $("whoRole").textContent = ROLE_LABEL[role] || "—";
@@ -650,11 +681,15 @@ onAuthStateChanged(auth, async user => {
   $("studentPanel").style.display = role === "student" ? "" : "none";
   $("parentPanel").style.display = role === "parent" ? "" : "none";
 
-  if (role === "admin") loadUsers();
-  if (role === "teacher") loadTeacherHome(user.uid);
-  if (role === "student") renderStudentHome(profile);
-  if (role === "parent") loadParentHome(user.uid);
+  refreshLists = () => {
+    if (role === "admin") loadUsers();
+    if (role === "teacher") loadTeacherHome(user.uid);
+    if (role === "student") renderStudentHome(myProfile);
+    if (role === "parent") loadParentHome(user.uid);
+  };
+  refreshLists();
 });
+let refreshLists = () => {};
 
 // ---- Туслах ----
 function el(tag, cls, text) {
@@ -664,30 +699,155 @@ function el(tag, cls, text) {
   return e;
 }
 
-// ---- Багшийн нүүр: бүх сурагчийг харна ----
+// ---- Профайл зураг (256px жижигрүүлж Firestore-д хадгална, төлбөргүй) ----
+function avatar(u, big) {
+  const cls = "avatar" + (big ? " big" : "");
+  if (u && u.photo) {
+    const i = document.createElement("img");
+    i.className = cls; i.src = u.photo; i.alt = "";
+    return i;
+  }
+  return el("span", cls, ((u && (u.name || u.email)) || "?").trim().charAt(0).toUpperCase());
+}
+
+function resizeToDataUrl(file, size) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      c.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+    img.src = url;
+  });
+}
+
+let myProfile = null;
+function paintMe() {
+  const box = $("meAvatar");
+  box.textContent = "";
+  box.append(avatar(myProfile || { name: auth.currentUser && auth.currentUser.email }, true));
+}
+
+$("meBox").addEventListener("click", () => $("photoInput").click());
+$("photoInput").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  const msg = $("photoMsg");
+  if (!file || !auth.currentUser) return;
+  msg.style.color = "#1E9E5A";
+  msg.textContent = "Зураг хадгалж байна...";
+  try {
+    const dataUrl = await resizeToDataUrl(file, 256);
+    await updateDoc(doc(db, "users", auth.currentUser.uid), { photo: dataUrl });
+    myProfile = Object.assign({}, myProfile, { photo: dataUrl });
+    paintMe();
+    msg.textContent = "Зураг шинэчлэгдлээ";
+    setTimeout(() => { msg.textContent = ""; }, 2500);
+    refreshLists();
+  } catch (err) {
+    msg.style.color = "#D63031";
+    msg.textContent = "Зураг хадгалж чадсангүй. Өөр зураг сонгоно уу.";
+    console.error(err);
+  }
+});
+
+// ---- Багшаар бүлэглэж харуулах (багш -> сурагч -> эцэг эх) ----
+function renderGroups(box, users, myUid, showOrphanParents) {
+  box.textContent = "";
+  const by = (a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "");
+  const teachers = users.filter(u => u.role === "teacher").sort(by);
+  const students = users.filter(u => u.role === "student").sort(by);
+  const parents = users.filter(u => u.role === "parent").sort(by);
+  const parentById = {};
+  parents.forEach(p => { parentById[p.id] = p; });
+  teachers.sort((a, b) => (b.id === myUid) - (a.id === myUid));
+
+  function studentRow(st) {
+    const it = el("div", "item");
+    const left = el("div", "who2");
+    left.append(avatar(st));
+    const txt = el("div");
+    txt.append(el("b", null, st.name || "—"));
+    const p = parentById[st.parentId];
+    txt.append(el("small", null, p
+      ? "Эцэг эх: " + (p.name || p.email) + (p.email ? " · " + p.email : "")
+      : "Эцэг эх: тохируулаагүй"));
+    left.append(txt);
+    it.append(left);
+    return it;
+  }
+
+  function group(title, kids, open, tagText) {
+    const d = el("details", "grp");
+    if (open) d.open = true;
+    const sum = el("summary");
+    sum.append(el("span", null, title));
+    sum.append(el("span", "tag" + (tagText ? "" : " soft"), tagText || (kids.length + " сурагч")));
+    d.append(sum);
+    const inner = el("div", "list");
+    if (kids.length) kids.forEach(k => inner.append(studentRow(k)));
+    else inner.append(el("div", "sub", "Одоогоор сурагч холбогдоогүй."));
+    d.append(inner);
+    return d;
+  }
+
+  const known = {};
+  teachers.forEach(t => {
+    known[t.id] = true;
+    const kids = students.filter(s => s.teacherId === t.id);
+    const mine = t.id === myUid;
+    box.append(group("Багш: " + (t.name || t.email), kids, mine, mine ? "Миний бүлэг · " + kids.length : null));
+  });
+
+  const loose = students.filter(s => !s.teacherId || !known[s.teacherId]);
+  if (loose.length) box.append(group("Багш тохируулаагүй сурагчид", loose, false, null));
+
+  if (showOrphanParents) {
+    const used = {};
+    students.forEach(s => { if (s.parentId) used[s.parentId] = true; });
+    const free = parents.filter(p => !used[p.id]);
+    if (free.length) {
+      const d = el("details", "grp");
+      const sum = el("summary");
+      sum.append(el("span", null, "Хүүхэд холбогдоогүй эцэг эх"), el("span", "tag soft", String(free.length)));
+      d.append(sum);
+      const inner = el("div", "list");
+      free.forEach(p => {
+        const it = el("div", "item");
+        const left = el("div");
+        left.className = "who2";
+        const t2 = el("div");
+        t2.append(el("b", null, p.name || "—"), el("small", null, p.email || ""));
+        left.append(avatar(p), t2);
+        it.append(left);
+        inner.append(it);
+      });
+      d.append(inner);
+      box.append(d);
+    }
+  }
+  if (!box.childNodes.length) box.textContent = "Хэрэглэгч алга.";
+}
+
+// ---- Багшийн нүүр: багш бүрийн бүлэг ----
 async function loadTeacherHome(uid) {
   const list = $("teacherList"), sub = $("teacherSub");
   list.textContent = "Уншиж байна...";
   try {
-    const snap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
+    const snap = await getDocs(collection(db, "users"));
     const rows = [];
     snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
-    rows.sort((a, b) =>
-      (b.teacherId === uid) - (a.teacherId === uid) || (a.name || "").localeCompare(b.name || ""));
-    const mine = rows.filter(r => r.teacherId === uid).length;
-    sub.textContent = "Нийт " + rows.length + " сурагч, үүнээс таны үндсэн сурагч " + mine + ".";
-    list.textContent = "";
-    rows.forEach(r => {
-      const it = el("div", "item");
-      const left = el("div");
-      left.append(el("b", null, r.name || "—"));
-      left.append(el("small", null,
-        "Багш: " + (r.teacherName || "—") + " · Эцэг эх: " + (r.parentName || "—")));
-      it.append(left);
-      if (r.teacherId === uid) it.append(el("span", "tag", "Миний сурагч"));
-      list.appendChild(it);
-    });
-    if (!rows.length) list.textContent = "Сурагч алга.";
+    const total = rows.filter(r => r.role === "student").length;
+    const mine = rows.filter(r => r.role === "student" && r.teacherId === uid).length;
+    sub.textContent = "Нийт " + total + " сурагч, үүнээс таны бүлэгт " + mine + ".";
+    renderGroups(list, rows, uid, false);
   } catch (err) {
     list.textContent = "Жагсаалт уншиж чадсангүй.";
     console.error(err);
@@ -699,11 +859,16 @@ function renderStudentHome(p) {
   const box = $("studentInfo");
   box.textContent = "";
   const rows = [
+    ["Зураг", ""],
     ["Нэр", (p && p.name) || "—"],
     ["Үндсэн багш", (p && p.teacherName) || "Тохируулаагүй"],
     ["Эцэг эх", (p && p.parentName) || "Тохируулаагүй"]
   ];
-  rows.forEach(r => { box.append(el("span", null, r[0]), el("span", null, r[1])); });
+  rows.forEach(r => {
+    const v = el("span", null, r[1]);
+    if (r[0] === "Зураг") v.append(avatar(p, true));
+    box.append(el("span", null, r[0]), v);
+  });
 }
 
 // ---- Эцэг эхийн нүүр: өөрийн хүүхдүүд ----
@@ -719,9 +884,12 @@ async function loadParentHome(uid) {
     list.textContent = "";
     rows.forEach(r => {
       const it = el("div", "item");
-      const left = el("div");
-      left.append(el("b", null, r.name || "—"));
-      left.append(el("small", null, "Багш: " + (r.teacherName || "Тохируулаагүй")));
+      const left = el("div", "who2");
+      left.append(avatar(r));
+      const t3 = el("div");
+      t3.append(el("b", null, r.name || "—"));
+      t3.append(el("small", null, "Багш: " + (r.teacherName || "Тохируулаагүй")));
+      left.append(t3);
       it.append(left);
       list.appendChild(it);
     });
@@ -741,6 +909,7 @@ async function loadUsers() {
     const rows = [];
     snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
     rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    renderGroups($("groupView"), rows, null, true);
     const teachers = rows.filter(r => r.role === "teacher");
     const parents = rows.filter(r => r.role === "parent");
     const kids = {};
@@ -750,8 +919,9 @@ async function loadUsers() {
     rows.forEach(u => {
       const row = el("div", "urow col");
       const top = el("div", "top");
-      top.append(el("span", null, (u.name || "—") + " · " + (u.email || "")),
-                 el("span", null, ROLE_LABEL[u.role] || u.role || ""));
+      const who = el("span", "who2");
+      who.append(avatar(u), el("span", null, (u.name || "—") + " · " + (u.email || "")));
+      top.append(who, el("span", null, ROLE_LABEL[u.role] || u.role || ""));
       row.append(top);
 
       if (u.role === "parent") {
