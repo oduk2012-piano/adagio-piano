@@ -193,6 +193,41 @@
     background: var(--card); color: var(--ink); border: 2px solid var(--line);
     box-shadow: 0 4px 12px rgba(43,34,80,.18);
   }
+  /* ---- Хичээлийн бүртгэл (сард 12 хичээл) ---- */
+  .lw { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .lw .bar-top { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .lw .bar-top select { width: auto; padding: 8px 10px; font-size: 14px; }
+  .bars { display: flex; gap: 6px; align-items: flex-end; height: 110px; padding: 6px 2px 0; }
+  .bars .b { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    height: 100%; cursor: pointer; gap: 4px; min-width: 0; }
+  .bars .b i { display: block; width: 100%; min-height: 3px; border-radius: 6px 6px 0 0;
+    background: linear-gradient(180deg, var(--accent), var(--pink)); opacity: .55; transition: height .25s; }
+  .bars .b.sel i { opacity: 1; }
+  .bars .b em { font-style: normal; font-size: 11px; opacity: .75; }
+  .bars .b.sel em { font-weight: 800; opacity: 1; color: var(--accent); }
+  .bars .b small { font-size: 10px; min-height: 12px; opacity: .8; }
+  .cells { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .cell { padding: 0; height: 46px; border-radius: 12px; font-size: 15px; font-weight: 800;
+    background: var(--soft); color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+  .cell.done { background: #2ECC71; border-color: #2ECC71; color: #fff; }
+  .cell.absent { background: #FF5C5C; border-color: #FF5C5C; color: #fff; }
+  .cell:disabled { opacity: 1; cursor: default; }
+  .cell.pick { outline: 3px solid var(--accent); outline-offset: 1px; }
+  .cell.has { position: relative; }
+  .cell.has::after { content: ""; position: absolute; top: 4px; right: 5px; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--card); }
+  .ldetail { display: flex; flex-direction: column; gap: 6px; }
+  .ldetail:empty { display: none; }
+  .ldetail .lrow { display: grid; grid-template-columns: 150px 1fr; gap: 8px; }
+  @media (max-width: 520px) { .ldetail .lrow { grid-template-columns: 1fr; } }
+  .ldetail input { padding: 9px 10px; font-size: 14px; }
+  .ldetail .lview { font-size: 14px; background: var(--soft); border-radius: 10px; padding: 8px 10px; }
+  .lw .sum { font-size: 14px; }
+  .lw .legend { font-size: 12px; opacity: .75; }
+  .item.wrap { flex-wrap: wrap; }
+  .item .full { flex-basis: 100%; }
+  .bankline { font-size: 13px; opacity: .85; padding: 2px 2px 6px; }
+  .copy { padding: 4px 10px; font-size: 12px; margin-left: 8px; }
   details.grp { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 8px 10px; }
   details.grp > summary {
     cursor: pointer; font-weight: 700; display: flex; justify-content: space-between;
@@ -375,10 +410,56 @@
       <div id="teacherList" class="list"></div>
     </div>
 
+    <!-- Багш: хичээлийн бүртгэл -->
+    <div id="lessonPanel" class="home card" style="display:none">
+      <h2>Хичээлийн бүртгэл</h2>
+      <p class="sub">Сард 12 хичээл. Хичээл бүр дээр дарж тэмдэглэнэ.</p>
+      <div class="bar-top" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <label for="lessonStudent" style="margin:0">Сурагч</label>
+        <select id="lessonStudent" style="width:auto;flex:1;min-width:160px"></select>
+      </div>
+      <div id="lessonBox"></div>
+    </div>
+
+    <!-- Багшийн дансны мэдээлэл -->
+    <div id="bankPanel" class="home card" style="display:none">
+      <h2>Миний дансны мэдээлэл</h2>
+      <p class="sub">Эцэг эх, сурагч сургалтын төлбөрөө энэ данс руу шилжүүлнэ.</p>
+      <form id="bankForm" class="grid" autocomplete="off">
+        <div>
+          <label for="bankName">Банк</label>
+          <input id="bankName" list="bankList" type="text" placeholder="Жишээ: Хаан банк" required>
+          <datalist id="bankList">
+            <option value="Хаан банк"><option value="Голомт банк"><option value="Худалдаа хөгжлийн банк">
+            <option value="Төрийн банк"><option value="Хас банк"><option value="Тээвэр хөгжлийн банк">
+            <option value="Капитрон банк"><option value="Богд банк"><option value="Чингис хаан банк">
+            <option value="Ариг банк"><option value="М банк"><option value="Транс банк">
+          </datalist>
+        </div>
+        <div>
+          <label for="bankAcc">Дансны дугаар</label>
+          <input id="bankAcc" type="text" inputmode="numeric" required>
+        </div>
+        <div class="full">
+          <label for="bankHolder">Данс эзэмшигчийн нэр</label>
+          <input id="bankHolder" type="text" required>
+        </div>
+        <div class="full">
+          <div id="bankMsg" class="msg"></div>
+          <button id="bankBtn" type="submit" style="width:100%">Хадгалах</button>
+        </div>
+      </form>
+    </div>
+
     <!-- Сурагчид харагдана -->
     <div id="studentPanel" class="home card" style="display:none">
       <h2>Миний мэдээлэл</h2>
       <div class="kv" id="studentInfo"></div>
+    </div>
+
+    <div id="studentLessonPanel" class="home card" style="display:none">
+      <h2>Миний хичээлийн бүртгэл</h2>
+      <div id="studentLessonBox"></div>
     </div>
 
     <!-- Эцэг эхэд харагдана -->
@@ -432,7 +513,7 @@
 
     <div class="row">
       <button id="demo">▶ Жишээ ая сонсох</button>
-      <button id="wave" class="ghost">Дуу: зөөлөн</button>
+      <button id="wave" class="ghost">Дуу: Хааны төгөлдөр</button>
       <button id="install">📲 Утсандаа суулгах</button>
     </div>
 
@@ -461,41 +542,147 @@
   const keysEl = document.getElementById("keys");
   const nowEl = document.getElementById("now");
   let ctx = null;
-  let wave = "triangle";
+  let wave = "royal";
   const active = new Map();
   const elByKey = {};
 
+  // ---- "Хааны төгөлдөр": жинхэнэ төгөлдөр хуурын дууг дуурайсан синтез ----
+  let master = null, reverbSend = null;
+
+  function makeImpulse(c, seconds, decay) {
+    const len = Math.floor(c.sampleRate * seconds);
+    const buf = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
   function audio() {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.9;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -20; comp.knee.value = 24; comp.ratio.value = 4;
+      comp.attack.value = 0.003; comp.release.value = 0.25;
+      master.connect(comp);
+      comp.connect(ctx.destination);
+      const conv = ctx.createConvolver();
+      conv.buffer = makeImpulse(ctx, 2.4, 2.6);
+      reverbSend = ctx.createGain();
+      reverbSend.gain.value = 0.2;
+      reverbSend.connect(conv);
+      conv.connect(comp);
+    }
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
+  }
+
+  const PARTIALS = [1, 0.62, 0.42, 0.3, 0.2, 0.14, 0.1, 0.07, 0.05, 0.035];
+
+  function pianoVoice(a, f) {
+    const now = a.currentTime;
+    const out = a.createGain();
+    const filt = a.createBiquadFilter();
+    filt.type = "lowpass";
+    filt.Q.value = 0.5;
+    filt.frequency.setValueAtTime(Math.min(9000, f * 14), now);
+    filt.frequency.exponentialRampToValueAtTime(Math.max(f * 3, 1000), now + 1.3);
+    filt.connect(out);
+    out.connect(master);
+    out.connect(reverbSend);
+
+    const vel = 0.9 + Math.random() * 0.2;
+    const tail = Math.max(2.4, 4.4 - Math.log2(f / 261.63) * 1.0);
+    const n = f < 300 ? 10 : 8;
+    const oscs = [];
+    for (let k = 1; k <= n; k++) {
+      const freq = f * k * Math.sqrt(1 + 0.00025 * k * k);
+      const peak = 0.2 * PARTIALS[k - 1] * vel;
+      const dec = tail / (1 + (k - 1) * 0.55);
+      const voices = k <= 2 ? [-1.5, 1.5] : [0];
+      voices.forEach(cents => {
+        const o = a.createOscillator();
+        o.type = "sine";
+        o.frequency.value = freq;
+        o.detune.value = cents;
+        const g = a.createGain();
+        const pk = voices.length > 1 ? peak * 0.6 : peak;
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(pk, now + 0.004);
+        g.gain.setTargetAtTime(pk * 0.5, now + 0.006, 0.16);
+        g.gain.setTargetAtTime(0.0001, now + 0.7, dec / 3);
+        o.connect(g);
+        g.connect(filt);
+        o.start(now);
+        try { o.stop(now + tail * 1.6 + 1); } catch (e) {}
+        oscs.push(o);
+      });
+    }
+
+    // алхны цохилт (hammer)
+    const nlen = Math.floor(a.sampleRate * 0.03);
+    const nb = a.createBuffer(1, nlen, a.sampleRate);
+    const nd = nb.getChannelData(0);
+    for (let i = 0; i < nlen; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nlen, 3);
+    const ns = a.createBufferSource();
+    ns.buffer = nb;
+    const bp = a.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = Math.min(4000, f * 3);
+    bp.Q.value = 0.8;
+    const ng = a.createGain();
+    ng.gain.value = 0.35 * vel;
+    ns.connect(bp); bp.connect(ng); ng.connect(master);
+    ns.start(now);
+
+    return {
+      release() {
+        const t = a.currentTime;
+        out.gain.cancelScheduledValues(t);
+        out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), t);
+        out.gain.setTargetAtTime(0.0001, t, 0.09);
+        oscs.forEach(o => { try { o.stop(t + 0.6); } catch (e) {} });
+      }
+    };
   }
 
   function start(el, note) {
     if (active.has(el)) return;
     const a = audio();
-    const osc = a.createOscillator();
-    const gain = a.createGain();
-    osc.type = wave;
-    osc.frequency.value = note.f;
-    gain.gain.setValueAtTime(0, a.currentTime);
-    gain.gain.linearRampToValueAtTime(0.35, a.currentTime + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.18, a.currentTime + 0.4);
-    osc.connect(gain).connect(a.destination);
-    osc.start();
-    active.set(el, { osc, gain });
+    let voice;
+    if (wave === "royal") {
+      voice = pianoVoice(a, note.f);
+    } else {
+      const osc = a.createOscillator();
+      const gain = a.createGain();
+      osc.type = wave;
+      osc.frequency.value = note.f;
+      gain.gain.setValueAtTime(0, a.currentTime);
+      gain.gain.linearRampToValueAtTime(0.35, a.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.18, a.currentTime + 0.4);
+      osc.connect(gain).connect(a.destination);
+      osc.start();
+      voice = {
+        release() {
+          gain.gain.cancelScheduledValues(a.currentTime);
+          gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), a.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.18);
+          try { osc.stop(a.currentTime + 0.2); } catch (e) {}
+        }
+      };
+    }
+    active.set(el, voice);
     el.classList.add("on");
     nowEl.textContent = note.n;
   }
 
   function stop(el) {
-    const s = active.get(el);
-    if (!s) return;
-    const a = ctx;
-    s.gain.gain.cancelScheduledValues(a.currentTime);
-    s.gain.gain.setValueAtTime(Math.max(s.gain.gain.value, 0.0001), a.currentTime);
-    s.gain.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.18);
-    s.osc.stop(a.currentTime + 0.2);
+    const v = active.get(el);
+    if (!v) return;
+    v.release();
     active.delete(el);
     el.classList.remove("on");
   }
@@ -552,7 +739,7 @@
     }
   });
 
-  const waves = [["triangle", "зөөлөн"], ["sine", "цэвэр"], ["square", "тоглоомын"]];
+  const waves = [["royal", "Хааны төгөлдөр"], ["triangle", "зөөлөн"], ["sine", "цэвэр"], ["square", "тоглоомын"]];
   let wi = 0;
   const waveBtn = document.getElementById("wave");
   waveBtn.addEventListener("click", () => {
@@ -721,12 +908,17 @@ onAuthStateChanged(auth, async user => {
   $("noRole").style.display = role ? "none" : "";
   $("adminPanel").style.display = role === "admin" ? "" : "none";
   $("teacherPanel").style.display = role === "teacher" ? "" : "none";
+  $("bankPanel").style.display = role === "teacher" ? "" : "none";
+  $("lessonPanel").style.display = role === "teacher" ? "" : "none";
+  $("studentLessonPanel").style.display = role === "student" ? "" : "none";
+  if (role === "teacher") initLessonPanel(user.uid);
+  if (role === "student") lessonWidget($("studentLessonBox"), Object.assign({ id: user.uid }, profile), false);
   $("studentPanel").style.display = role === "student" ? "" : "none";
   $("parentPanel").style.display = role === "parent" ? "" : "none";
 
   refreshLists = () => {
     if (role === "admin") loadUsers();
-    if (role === "teacher") loadTeacherHome(user.uid);
+    if (role === "teacher") { loadTeacherHome(user.uid); loadMyBank(user.uid); }
     if (role === "student") renderStudentHome(myProfile);
     if (role === "parent") loadParentHome(user.uid);
   };
@@ -801,8 +993,270 @@ $("photoInput").addEventListener("change", async e => {
   }
 });
 
+// ---- Багшийн дансны мэдээлэл (bank/{багшийн uid}) ----
+function bankText(b) {
+  return b ? (b.bankName + " · " + b.account + " · " + b.holder) : "";
+}
+
+async function loadBankMap() {
+  const map = {};
+  try {
+    const snap = await getDocs(collection(db, "bank"));
+    snap.forEach(d => { map[d.id] = d.data(); });
+  } catch (err) { console.error(err); }
+  return map;
+}
+
+function bankLine(b) {
+  const box = el("div", "bankline");
+  if (!b) { box.textContent = "Данс: оруулаагүй"; return box; }
+  box.append("Данс: " + bankText(b));
+  const c = el("button", "ghost copy", "Хуулах");
+  c.type = "button";
+  c.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.account); c.textContent = "Хуулагдлаа"; }
+    catch (e) { c.textContent = b.account; }
+    setTimeout(() => { c.textContent = "Хуулах"; }, 2000);
+  });
+  box.append(c);
+  return box;
+}
+
+async function loadMyBank(uid) {
+  try {
+    const snap = await getDoc(doc(db, "bank", uid));
+    if (snap.exists()) {
+      const b = snap.data();
+      $("bankName").value = b.bankName || "";
+      $("bankAcc").value = b.account || "";
+      $("bankHolder").value = b.holder || "";
+    }
+  } catch (err) { console.error(err); }
+}
+
+$("bankForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("bankMsg"), btn = $("bankBtn");
+  const uid = auth.currentUser && auth.currentUser.uid;
+  if (!uid) return;
+  msg.className = "msg";
+  msg.textContent = "";
+  btn.disabled = true;
+  try {
+    await setDoc(doc(db, "bank", uid), {
+      bankName: $("bankName").value.trim(),
+      account: $("bankAcc").value.trim(),
+      holder: $("bankHolder").value.trim(),
+      updatedAt: serverTimestamp()
+    });
+    msg.className = "msg ok";
+    msg.textContent = "Дансны мэдээлэл хадгалагдлаа";
+    refreshLists();
+  } catch (err) {
+    msg.className = "msg err";
+    msg.textContent = "Хадгалж чадсангүй.";
+    console.error(err);
+  }
+  btn.disabled = false;
+});
+
+// ---- Хичээлийн бүртгэл: lessons/{сурагчийн uid}_{YYYY-MM} ----
+const MONTHS = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+function ymId(sid, y, m) { return sid + "_" + y + "-" + String(m).padStart(2, "0"); }
+function countMarks(marks) {
+  const r = { done: 0, absent: 0 };
+  Object.keys(marks || {}).forEach(k => { if (marks[k] === "done") r.done++; else if (marks[k] === "absent") r.absent++; });
+  return r;
+}
+
+function lessonWidget(box, student, editable) {
+  box.textContent = "";
+  const now = new Date();
+  let year = now.getFullYear(), month = now.getMonth() + 1;
+  let cache = {};          // m -> { marks, info }
+  let loading = false;
+  let selected = 0;        // сонгосон хичээлийн дугаар
+
+  const w = el("div", "lw");
+  const top = el("div", "bar-top");
+  const ySel = el("select");
+  for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) ySel.append(new Option(y + " он", y));
+  ySel.value = year;
+  const mSel = el("select");
+  MONTHS.forEach(m => mSel.append(new Option(m + "-р сар", m)));
+  mSel.value = month;
+  top.append(ySel, mSel);
+  const bars = el("div", "bars");
+  const sum = el("div", "sum");
+  const cells = el("div", "cells");
+  const detail = el("div", "ldetail");
+  const legend = el("div", "legend", editable
+    ? "Дарах бүрт: хоосон → ✓ орсон → ✗ тасалсан → хоосон. Сонгосон хичээлийн огноо, тэмдэглэлийг доор бичнэ."
+    : "✓ орсон · ✗ тасалсан. Хичээл дээр дарж огноо, тэмдэглэлийг хар.");
+  const st = el("div", "msg");
+  w.append(top, bars, sum, cells, detail, legend, st);
+  box.append(w);
+
+  const cur = () => cache[month] || { marks: {}, info: {} };
+
+  async function loadYear() {
+    loading = true;
+    st.className = "msg";
+    st.textContent = "Уншиж байна...";
+    cache = {};
+    try {
+      const snaps = await Promise.all(MONTHS.map(m => getDoc(doc(db, "lessons", ymId(student.id, year, m)))));
+      snaps.forEach((sn, i) => {
+        const d = sn.exists() ? sn.data() : {};
+        cache[i + 1] = { marks: d.marks || {}, info: d.info || {} };
+      });
+      st.textContent = "";
+    } catch (err) {
+      MONTHS.forEach((m, i) => { cache[i + 1] = { marks: {}, info: {} }; });
+      st.className = "msg err";
+      st.textContent = "Бүртгэл уншиж чадсангүй.";
+      console.error(err);
+    }
+    loading = false;
+    paint();
+  }
+
+  function paint() {
+    bars.textContent = "";
+    MONTHS.forEach((m, i) => {
+      const n = i + 1;
+      const c = countMarks((cache[n] || {}).marks).done;
+      const b = el("div", "b" + (n === month ? " sel" : ""));
+      b.title = n + "-р сар: " + c + " хичээл";
+      const bar = el("i");
+      bar.style.height = Math.max(3, Math.round((c / 12) * 80)) + "px";
+      b.append(el("small", null, c ? String(c) : ""), bar, el("em", null, m));
+      b.addEventListener("click", () => { month = n; mSel.value = n; selected = 0; paint(); });
+      bars.append(b);
+    });
+    const { marks, info } = cur();
+    const cnt = countMarks(marks);
+    sum.textContent = year + " оны " + month + "-р сар: орсон " + cnt.done +
+      " · тасалсан " + cnt.absent + " · үлдсэн " + (12 - cnt.done - cnt.absent) + " (12-оос)";
+    cells.textContent = "";
+    for (let i = 1; i <= 12; i++) {
+      const v = marks[i] || "";
+      const inf = info[i] || {};
+      const c = el("button", "cell" + (v ? " " + v : "") + (i === selected ? " pick" : "") +
+        (inf.note ? " has" : ""), v === "done" ? "✓" : v === "absent" ? "✗" : String(i));
+      c.type = "button";
+      c.disabled = loading;
+      c.addEventListener("click", () => { editable ? toggle(i) : select(i); });
+      cells.append(c);
+    }
+    paintDetail();
+  }
+
+  function select(i) { selected = i; paint(); }
+
+  function paintDetail() {
+    detail.textContent = "";
+    if (!selected) return;
+    const inf = cur().info[selected] || {};
+    detail.append(el("b", null, selected + "-р хичээл"));
+    if (editable) {
+      const row = el("div", "lrow");
+      const d = el("input"); d.type = "date"; d.value = inf.date || "";
+      const n = el("input"); n.type = "text"; n.maxLength = 200;
+      n.placeholder = "Тэмдэглэл (жишээ: Бетховений зохиол эхэлсэн)"; n.value = inf.note || "";
+      const save = () => saveInfo(selected, d.value, n.value.trim());
+      d.addEventListener("change", save);
+      n.addEventListener("change", save);
+      row.append(d, n);
+      detail.append(row);
+    } else {
+      detail.append(el("div", "lview", (inf.date ? "📅 " + inf.date : "Огноо оруулаагүй") +
+        (inf.note ? " · " + inf.note : "")));
+    }
+  }
+
+  async function persist() {
+    const c = cur();
+    st.className = "msg";
+    st.textContent = "Хадгалж байна...";
+    try {
+      await setDoc(doc(db, "lessons", ymId(student.id, year, month)), {
+        studentId: student.id,
+        teacherId: auth.currentUser.uid,
+        ym: year + "-" + String(month).padStart(2, "0"),
+        marks: c.marks,
+        info: c.info,
+        updatedAt: serverTimestamp()
+      });
+      st.className = "msg ok";
+      st.textContent = "Хадгалагдлаа";
+    } catch (err) {
+      st.className = "msg err";
+      st.textContent = "Хадгалж чадсангүй.";
+      console.error(err);
+    }
+  }
+
+  function toggle(i) {
+    const c = cur();
+    const marks = Object.assign({}, c.marks);
+    const info = Object.assign({}, c.info);
+    const was = marks[i] || "";
+    const next = was === "" ? "done" : was === "done" ? "absent" : "";
+    if (next) marks[i] = next; else delete marks[i];
+    // Орсон гэж тэмдэглэхэд огноог өнөөдрөөр автоматаар бөглөнө
+    if (next === "done" && !(info[i] && info[i].date)) {
+      const t = new Date();
+      const iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+      info[i] = Object.assign({}, info[i], { date: iso });
+    }
+    cache[month] = { marks, info };
+    selected = i;
+    paint();
+    persist();
+  }
+
+  function saveInfo(i, date, note) {
+    const c = cur();
+    const info = Object.assign({}, c.info);
+    if (date || note) info[i] = { date: date || "", note: note || "" }; else delete info[i];
+    cache[month] = { marks: c.marks, info };
+    paint();
+    persist();
+  }
+
+  ySel.addEventListener("change", () => { year = Number(ySel.value); selected = 0; loadYear(); });
+  mSel.addEventListener("change", () => { month = Number(mSel.value); selected = 0; paint(); });
+  loadYear();
+}
+
+// Багшийн хичээлийн самбар: сурагч сонгоно
+async function initLessonPanel(uid) {
+  const sel = $("lessonStudent"), box = $("lessonBox");
+  sel.textContent = "";
+  box.textContent = "Уншиж байна...";
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
+    const rows = [];
+    snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
+    rows.sort((a, b) =>
+      (b.teacherId === uid) - (a.teacherId === uid) || (a.name || "").localeCompare(b.name || ""));
+    if (!rows.length) { box.textContent = "Сурагч алга."; return; }
+    rows.forEach(r => sel.append(new Option((r.name || r.email) + (r.teacherId === uid ? " ★" : ""), r.id)));
+    const show = () => {
+      const r = rows.find(x => x.id === sel.value);
+      lessonWidget(box, r, true);
+    };
+    sel.onchange = show;
+    show();
+  } catch (err) {
+    box.textContent = "Жагсаалт уншиж чадсангүй.";
+    console.error(err);
+  }
+}
+
 // ---- Багшаар бүлэглэж харуулах (багш -> сурагч -> эцэг эх) ----
-function renderGroups(box, users, myUid, showOrphanParents) {
+function renderGroups(box, users, myUid, showOrphanParents, bankMap) {
   box.textContent = "";
   const by = (a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "");
   const teachers = users.filter(u => u.role === "teacher").sort(by);
@@ -827,7 +1281,7 @@ function renderGroups(box, users, myUid, showOrphanParents) {
     return it;
   }
 
-  function group(title, kids, open, tagText) {
+  function group(title, kids, open, tagText, bank) {
     const d = el("details", "grp");
     if (open) d.open = true;
     const sum = el("summary");
@@ -835,6 +1289,7 @@ function renderGroups(box, users, myUid, showOrphanParents) {
     sum.append(el("span", "tag" + (tagText ? "" : " soft"), tagText || (kids.length + " сурагч")));
     d.append(sum);
     const inner = el("div", "list");
+    if (bank !== undefined) inner.append(bankLine(bank));
     if (kids.length) kids.forEach(k => inner.append(studentRow(k)));
     else inner.append(el("div", "sub", "Одоогоор сурагч холбогдоогүй."));
     d.append(inner);
@@ -846,7 +1301,8 @@ function renderGroups(box, users, myUid, showOrphanParents) {
     known[t.id] = true;
     const kids = students.filter(s => s.teacherId === t.id);
     const mine = t.id === myUid;
-    box.append(group("Багш: " + (t.name || t.email), kids, mine, mine ? "Миний бүлэг · " + kids.length : null));
+    box.append(group("Багш: " + (t.name || t.email), kids, mine, mine ? "Миний бүлэг · " + kids.length : null,
+      bankMap ? (bankMap[t.id] || null) : undefined));
   });
 
   const loose = students.filter(s => !s.teacherId || !known[s.teacherId]);
@@ -890,7 +1346,7 @@ async function loadTeacherHome(uid) {
     const total = rows.filter(r => r.role === "student").length;
     const mine = rows.filter(r => r.role === "student" && r.teacherId === uid).length;
     sub.textContent = "Нийт " + total + " сурагч, үүнээс таны бүлэгт " + mine + ".";
-    renderGroups(list, rows, uid, false);
+    renderGroups(list, rows, uid, false, await loadBankMap());
   } catch (err) {
     list.textContent = "Жагсаалт уншиж чадсангүй.";
     console.error(err);
@@ -912,6 +1368,14 @@ function renderStudentHome(p) {
     if (r[0] === "Зураг") v.append(avatar(p, true));
     box.append(el("span", null, r[0]), v);
   });
+  if (p && p.teacherId) {
+    const v = el("span", null, "Уншиж байна...");
+    box.append(el("span", null, "Төлбөрийн данс"), v);
+    getDoc(doc(db, "bank", p.teacherId)).then(sn => {
+      v.textContent = "";
+      v.append(bankLine(sn.exists() ? sn.data() : null));
+    }).catch(() => { v.textContent = "—"; });
+  }
 }
 
 // ---- Эцэг эхийн нүүр: өөрийн хүүхдүүд ----
@@ -921,10 +1385,11 @@ async function loadParentHome(uid) {
   try {
     const snap = await getDocs(query(collection(db, "users"), where("parentId", "==", uid)));
     const rows = [];
-    snap.forEach(d => rows.push(d.data()));
+    snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
     rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     sub.textContent = rows.length ? "Бүртгэлтэй хүүхэд: " + rows.length : "";
     list.textContent = "";
+    const banks = await loadBankMap();
     rows.forEach(r => {
       const it = el("div", "item");
       const left = el("div", "who2");
@@ -932,8 +1397,19 @@ async function loadParentHome(uid) {
       const t3 = el("div");
       t3.append(el("b", null, r.name || "—"));
       t3.append(el("small", null, "Багш: " + (r.teacherName || "Тохируулаагүй")));
+      if (r.teacherId) t3.append(bankLine(banks[r.teacherId] || null));
       left.append(t3);
       it.append(left);
+      it.classList.add("wrap");
+      const det = el("details", "grp full");
+      det.append(el("summary", null, "Хичээлийн бүртгэл"));
+      const holder = el("div");
+      det.append(holder);
+      let built = false;
+      det.addEventListener("toggle", () => {
+        if (det.open && !built) { built = true; lessonWidget(holder, r, false); }
+      });
+      it.append(det);
       list.appendChild(it);
     });
     if (!rows.length) list.textContent = "Танд хүүхэд холбогдоогүй байна. Админтай холбогдоно уу.";
@@ -952,7 +1428,7 @@ async function loadUsers() {
     const rows = [];
     snap.forEach(d => rows.push(Object.assign({ id: d.id }, d.data())));
     rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    renderGroups($("groupView"), rows, null, true);
+    renderGroups($("groupView"), rows, null, true, await loadBankMap());
     const teachers = rows.filter(r => r.role === "teacher");
     const parents = rows.filter(r => r.role === "parent");
     const kids = {};
