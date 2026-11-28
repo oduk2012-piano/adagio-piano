@@ -200,6 +200,11 @@
   .bars { display: flex; gap: 6px; align-items: flex-end; height: 110px; padding: 6px 2px 0; }
   .bars .b { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
     height: 100%; cursor: pointer; gap: 4px; min-width: 0; }
+  .bars { gap: 3px; }
+  .bars .b em { font-size: 9px; }
+  .bars .b small { font-size: 9px; }
+  .years { display: flex; gap: 3px; font-size: 11px; opacity: .8; }
+  .years span { text-align: center; border-top: 2px solid var(--line); padding-top: 2px; }
   .bars .b i { display: block; width: 100%; min-height: 3px; border-radius: 6px 6px 0 0;
     background: linear-gradient(180deg, var(--accent), var(--pink)); opacity: .55; transition: height .25s; }
   .bars .b.sel i { opacity: 1; }
@@ -262,10 +267,21 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  .keys { position: relative; flex: 1; display: flex; }
+  :root { --kw: 54px; }
+  @media (max-width: 600px) { :root { --kw: 44px; } }
+  .scroller {
+    flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; position: relative;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; border-radius: 8px;
+  }
+  .scroller::-webkit-scrollbar { display: none; }
+  .keys { position: relative; display: flex; height: 100%; width: calc(var(--kw) * 52); }
+  .octbar { width: min(100%, 720px); display: flex; align-items: center; gap: 10px; }
+  .octbar button { padding: 6px 14px; font-size: 15px; flex: none; }
+  .octbar input[type=range] { flex: 1; padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
+  .white sup { font-size: 9px; opacity: .6; margin-left: 1px; }
 
   .white {
-    flex: 1;
+    flex: 0 0 var(--kw);
     background: #fff;
     border: 1px solid #cfc8e8;
     border-radius: 0 0 12px 12px;
@@ -274,8 +290,8 @@
     justify-content: center;
     padding-bottom: 10px;
     font-weight: 700;
-    font-size: 15px;
-    touch-action: none;
+    font-size: 13px;
+    touch-action: pan-x pan-y;
     cursor: pointer;
     transition: background .08s, transform .08s;
   }
@@ -291,13 +307,13 @@
   .black {
     position: absolute;
     top: 0;
-    width: 8%;
+    width: calc(var(--kw) * .6);
     height: 62%;
     transform: translateX(-50%);
     background: #1a1530;
     border-radius: 0 0 9px 9px;
     z-index: 2;
-    touch-action: none;
+    touch-action: pan-x pan-y;
     cursor: pointer;
     transition: background .08s;
   }
@@ -503,13 +519,21 @@
       <div id="groupView" class="list"></div>
       <h2 style="margin-top:10px">Бүх хэрэглэгч (засах, устгах)</h2>
       <div id="userList" class="users"></div>
+      <button id="cleanupBtn" class="ghost" type="button" style="margin-top:10px">24 сараас хуучин ирцийн бүртгэл цэвэрлэх</button>
+      <div id="cleanupMsg" class="msg"></div>
     </div>
 
     <div id="now">&nbsp;</div>
 
-    <div class="piano"><div class="keys" id="keys"></div></div>
+    <div class="piano"><div class="scroller" id="scroller"><div class="keys" id="keys"></div></div></div>
 
-    <p class="hint">Товчийг дар. Компьютер дээр: A S D F G H J K товчоор тогло.</p>
+    <div class="octbar">
+      <button id="octL" class="ghost" type="button" aria-label="Зүүн тийш">◀</button>
+      <input id="octRange" type="range" min="0" max="100" value="0" aria-label="Гар хөдлүүлэх">
+      <button id="octR" class="ghost" type="button" aria-label="Баруун тийш">▶</button>
+    </div>
+
+    <p class="hint">88 товчтой төгөлдөр. Гарыг шудрах, ◀ ▶ эсвэл гулсуурыг ашигла. Компьютер дээр: A S D F G H J K (мөн W E T Y U) товчоор харагдаж буй октавыг тогло.</p>
 
     <div class="row">
       <button id="demo">▶ Жишээ ая сонсох</button>
@@ -523,28 +547,27 @@
 <!-- ===== ПИАНО (хуучин код хэвээр) ===== -->
 <script>
 (function () {
-  const NOTES = [
-    { n: "До",   f: 261.63, w: true,  c: "#FF5C5C", k: "a" },
-    { n: "До♯",  f: 277.18, w: false, k: "w" },
-    { n: "Ре",   f: 293.66, w: true,  c: "#FF9F43", k: "s" },
-    { n: "Ре♯",  f: 311.13, w: false, k: "e" },
-    { n: "Ми",   f: 329.63, w: true,  c: "#F6C915", k: "d" },
-    { n: "Фа",   f: 349.23, w: true,  c: "#2ECC71", k: "f" },
-    { n: "Фа♯",  f: 369.99, w: false, k: "t" },
-    { n: "Соль", f: 392.00, w: true,  c: "#1ABC9C", k: "g" },
-    { n: "Соль♯",f: 415.30, w: false, k: "y" },
-    { n: "Ля",   f: 440.00, w: true,  c: "#3498DB", k: "h" },
-    { n: "Ля♯",  f: 466.16, w: false, k: "u" },
-    { n: "Си",   f: 493.88, w: true,  c: "#7C5CFF", k: "j" },
-    { n: "До",   f: 523.25, w: true,  c: "#FF5C5C", k: "k" }
-  ];
+  // 88 товч: A0 (MIDI 21) ... C8 (MIDI 108)
+  const SOL = ["До", "До♯", "Ре", "Ре♯", "Ми", "Фа", "Фа♯", "Соль", "Соль♯", "Ля", "Ля♯", "Си"];
+  const WHITE = [0, 2, 4, 5, 7, 9, 11];
+  const COLORS = { 0: "#FF5C5C", 2: "#FF9F43", 4: "#F6C915", 5: "#2ECC71", 7: "#1ABC9C", 9: "#3498DB", 11: "#7C5CFF" };
+  const KEYMAP = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12 };
+  const NOTES = [];
+  for (let m = 21; m <= 108; m++) {
+    const pc = m % 12;
+    NOTES.push({
+      m, n: SOL[pc], oct: Math.floor(m / 12) - 1,
+      f: 440 * Math.pow(2, (m - 69) / 12),
+      w: WHITE.indexOf(pc) >= 0, c: COLORS[pc]
+    });
+  }
 
   const keysEl = document.getElementById("keys");
   const nowEl = document.getElementById("now");
   let ctx = null;
   let wave = "royal";
   const active = new Map();
-  const elByKey = {};
+  const elByMidi = {};
 
   // ---- "Хааны төгөлдөр": жинхэнэ төгөлдөр хуурын дууг дуурайсан синтез ----
   let master = null, reverbSend = null;
@@ -596,7 +619,7 @@
 
     const vel = 0.9 + Math.random() * 0.2;
     const tail = Math.max(2.4, 4.4 - Math.log2(f / 261.63) * 1.0);
-    const n = f < 300 ? 10 : 8;
+    const n = Math.max(1, Math.min(f < 300 ? 10 : 8, Math.floor(12000 / f)));
     const oscs = [];
     for (let k = 1; k <= n; k++) {
       const freq = f * k * Math.sqrt(1 + 0.00025 * k * k);
@@ -676,7 +699,7 @@
     }
     active.set(el, voice);
     el.classList.add("on");
-    nowEl.textContent = note.n;
+    nowEl.textContent = note.n + note.oct;
   }
 
   function stop(el) {
@@ -688,19 +711,21 @@
   }
 
   let whiteIndex = 0;
-  const whiteCount = NOTES.filter(x => x.w).length;
+  const whiteIdxOf = {};
   NOTES.forEach(note => {
     const el = document.createElement("div");
     if (note.w) {
       el.className = "white";
       el.style.setProperty("--c", note.c);
-      el.innerHTML = '<div class="dot">' + note.n + "</div>";
+      el.innerHTML = '<div class="dot">' + note.n + "<sup>" + note.oct + "</sup></div>";
+      whiteIdxOf[note.m] = whiteIndex;
       whiteIndex++;
     } else {
       el.className = "black";
-      el.style.left = (whiteIndex * (100 / whiteCount)) + "%";
+      el.style.left = "calc(var(--kw) * " + whiteIndex + ")";
     }
     el.addEventListener("pointerdown", e => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       el.setPointerCapture && el.setPointerCapture(e.pointerId);
       start(el, note);
@@ -708,8 +733,40 @@
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev =>
       el.addEventListener(ev, () => stop(el)));
     keysEl.appendChild(el);
-    elByKey[note.k] = { el, note };
+    elByMidi[note.m] = { el, note };
   });
+
+  // ---- Шудрах: гар, ◀ ▶, гулсуур ----
+  const scroller = document.getElementById("scroller");
+  const octRange = document.getElementById("octRange");
+  const kw = () => keysEl.firstElementChild ? keysEl.firstElementChild.getBoundingClientRect().width : 44;
+  function syncRange() {
+    const max = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    octRange.max = String(max);
+    octRange.value = String(scroller.scrollLeft);
+  }
+  scroller.addEventListener("scroll", syncRange, { passive: true });
+  octRange.addEventListener("input", () => { scroller.scrollLeft = Number(octRange.value); });
+  document.getElementById("octL").addEventListener("click", () =>
+    scroller.scrollBy({ left: -kw() * 7, behavior: "smooth" }));
+  document.getElementById("octR").addEventListener("click", () =>
+    scroller.scrollBy({ left: kw() * 7, behavior: "smooth" }));
+  // Анх харагдах үед дундах До (C4)-г зүүн талд аваачна
+  let placed = false;
+  new ResizeObserver(() => {
+    if (scroller.clientWidth > 0 && !placed) {
+      placed = true;
+      scroller.scrollLeft = Math.max(0, whiteIdxOf[60] * kw() - kw() * 0.5);
+    }
+    syncRange();
+  }).observe(scroller);
+
+  // Харагдаж буй хамгийн зүүн До-гоос эхлэх октав
+  function baseMidi() {
+    const first = Math.round(scroller.scrollLeft / kw());
+    for (let m = 24; m <= 96; m += 12) { if (whiteIdxOf[m] >= first) return m; }
+    return 60;
+  }
 
   // Компьютерийн гар (бичиж байх үед пиано дуугарахгүй)
   function typing(e) {
@@ -717,27 +774,58 @@
     return t === "INPUT" || t === "SELECT" || t === "TEXTAREA";
   }
   window.addEventListener("keydown", e => {
-    if (e.repeat || typing(e)) return;
-    const m = elByKey[e.key.toLowerCase()];
+    if (e.repeat || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    const off = KEYMAP[e.key.toLowerCase()];
+    if (off === undefined) return;
+    const m = elByMidi[baseMidi() + off];
     if (m) start(m.el, m.note);
   });
   window.addEventListener("keyup", e => {
     if (typing(e)) return;
-    const m = elByKey[e.key.toLowerCase()];
-    if (m) stop(m.el);
+    const off = KEYMAP[e.key.toLowerCase()];
+    if (off === undefined) return;
+    Object.keys(elByMidi).forEach(k => stop(elByMidi[k].el));
   });
 
+  // Жишээ аян: "Гялс гялс одод" — дундах До (C4)-оос
   document.getElementById("demo").addEventListener("click", async () => {
-    const seq = ["a","a","g","g","h","h","g", "f","f","d","d","s","s","a"];
-    const gaps = [1,1,1,1,1,1,2, 1,1,1,1,1,1,2];
+    const seq = [0, 0, 7, 7, 9, 9, 7, 5, 5, 4, 4, 2, 2, 0];
+    const gaps = [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2];
     for (let i = 0; i < seq.length; i++) {
-      const m = elByKey[seq[i]];
+      const m = elByMidi[60 + seq[i]];
       start(m.el, m.note);
       await new Promise(r => setTimeout(r, 380));
       stop(m.el);
       await new Promise(r => setTimeout(r, 60 + (gaps[i] - 1) * 380));
     }
   });
+
+  // ---- Апп нээгдэхэд дуугарах угтах аялгуу (C-E-G-C-E арпеджио) ----
+  let welcomed = false;
+  function welcome() {
+    if (welcomed) return;
+    welcomed = true;
+    const a = audio();
+    [60, 64, 67, 72, 76].forEach((m, i) => {
+      setTimeout(() => {
+        const v = pianoVoice(a, 440 * Math.pow(2, (m - 69) / 12));
+        setTimeout(() => v.release(), 1700 - i * 150);
+      }, i * 230);
+    });
+  }
+  // Эхлээд өөрөө дуугаргахыг оролдоно. Хөтөч хориглосон бол анхны товшилтоор дуугарна.
+  try {
+    audio();
+    setTimeout(() => {
+      if (ctx && ctx.state === "running") { welcome(); return; }
+      const first = () => {
+        ["pointerdown", "keydown", "touchstart"].forEach(ev => window.removeEventListener(ev, first, true));
+        audio();
+        welcome();
+      };
+      ["pointerdown", "keydown", "touchstart"].forEach(ev => window.addEventListener(ev, first, true));
+    }, 300);
+  } catch (e) {}
 
   const waves = [["royal", "Хааны төгөлдөр"], ["triangle", "зөөлөн"], ["sine", "цэвэр"], ["square", "тоглоомын"]];
   let wi = 0;
@@ -1003,13 +1091,14 @@ async function loadBankMap() {
   try {
     const snap = await getDocs(collection(db, "bank"));
     snap.forEach(d => { map[d.id] = d.data(); });
-  } catch (err) { console.error(err); }
+  } catch (err) { console.error(err); map.__err = true; }
   return map;
 }
 
-function bankLine(b) {
+function bankLine(b, failed) {
   const box = el("div", "bankline");
-  if (!b) { box.textContent = "Данс: оруулаагүй"; return box; }
+  if (failed) { box.textContent = "Данс: уншиж чадсангүй (Rules шинэчлэгдсэн эсэхийг админ шалгана уу)"; return box; }
+  if (!b) { box.textContent = "Данс: багш оруулаагүй байна"; return box; }
   box.append("Данс: " + bankText(b));
   const c = el("button", "ghost copy", "Хуулах");
   c.type = "button";
@@ -1069,52 +1158,64 @@ function countMarks(marks) {
   return r;
 }
 
+// Сүүлийн 24 сар (өнөөдрөөс 23 сарын өмнөөс энэ сар хүртэл)
+function monthWindow() {
+  const now = new Date();
+  const out = [];
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({ y: d.getFullYear(), m: d.getMonth() + 1 });
+  }
+  return out;
+}
+const keyOf = w => w.y + "-" + String(w.m).padStart(2, "0");
+
 function lessonWidget(box, student, editable) {
   box.textContent = "";
-  const now = new Date();
-  let year = now.getFullYear(), month = now.getMonth() + 1;
-  let cache = {};          // m -> { marks, info }
+  const win = monthWindow();
+  let sel = 23;            // сонгосон сар (цонхны индекс)
+  let cache = {};          // "ЖЖЖЖ-СС" -> { marks, info }
   let loading = false;
   let selected = 0;        // сонгосон хичээлийн дугаар
 
   const w = el("div", "lw");
   const top = el("div", "bar-top");
-  const ySel = el("select");
-  for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) ySel.append(new Option(y + " он", y));
-  ySel.value = year;
   const mSel = el("select");
-  MONTHS.forEach(m => mSel.append(new Option(m + "-р сар", m)));
-  mSel.value = month;
-  top.append(ySel, mSel);
+  for (let i = 23; i >= 0; i--) mSel.append(new Option(win[i].y + " оны " + win[i].m + "-р сар", i));
+  mSel.value = sel;
+  top.append(mSel);
   const bars = el("div", "bars");
+  const years = el("div", "years");
   const sum = el("div", "sum");
   const cells = el("div", "cells");
   const detail = el("div", "ldetail");
-  const legend = el("div", "legend", editable
+  const legend = el("div", "legend", (editable
     ? "Дарах бүрт: хоосон → ✓ орсон → ✗ тасалсан → хоосон. Сонгосон хичээлийн огноо, тэмдэглэлийг доор бичнэ."
-    : "✓ орсон · ✗ тасалсан. Хичээл дээр дарж огноо, тэмдэглэлийг хар.");
+    : "✓ орсон · ✗ тасалсан. Хичээл дээр дарж огноо, тэмдэглэлийг хар.") + " Сүүлийн 24 сарын ирцийг хадгална.");
   const st = el("div", "msg");
-  w.append(top, bars, sum, cells, detail, legend, st);
+  w.append(top, bars, years, sum, cells, detail, legend, st);
   box.append(w);
 
-  const cur = () => cache[month] || { marks: {}, info: {} };
+  const cur = () => cache[keyOf(win[sel])] || { marks: {}, info: {} };
 
-  async function loadYear() {
+  async function loadAll() {
     loading = true;
     st.className = "msg";
     st.textContent = "Уншиж байна...";
     cache = {};
     try {
-      const snaps = await Promise.all(MONTHS.map(m => getDoc(doc(db, "lessons", ymId(student.id, year, m)))));
+      const snaps = await Promise.all(win.map(x => getDoc(doc(db, "lessons", ymId(student.id, x.y, x.m)))));
       snaps.forEach((sn, i) => {
         const d = sn.exists() ? sn.data() : {};
-        cache[i + 1] = { marks: d.marks || {}, info: d.info || {} };
+        cache[keyOf(win[i])] = { marks: d.marks || {}, info: d.info || {} };
       });
       st.textContent = "";
     } catch (err) {
-      MONTHS.forEach((m, i) => { cache[i + 1] = { marks: {}, info: {} }; });
+      win.forEach(x => { cache[keyOf(x)] = { marks: {}, info: {} }; });
       st.className = "msg err";
-      st.textContent = "Бүртгэл уншиж чадсангүй.";
+      st.textContent = err && err.code === "permission-denied"
+        ? "Эрх хүрэхгүй байна. Админ Firestore Rules-ийг шинэчилсэн эсэхийг шалгана уу."
+        : "Бүртгэл уншиж чадсангүй.";
       console.error(err);
     }
     loading = false;
@@ -1123,20 +1224,25 @@ function lessonWidget(box, student, editable) {
 
   function paint() {
     bars.textContent = "";
-    MONTHS.forEach((m, i) => {
-      const n = i + 1;
-      const c = countMarks((cache[n] || {}).marks).done;
-      const b = el("div", "b" + (n === month ? " sel" : ""));
-      b.title = n + "-р сар: " + c + " хичээл";
+    years.textContent = "";
+    const runs = [];
+    win.forEach((x, i) => {
+      const c = countMarks((cache[keyOf(x)] || {}).marks).done;
+      const b = el("div", "b" + (i === sel ? " sel" : ""));
+      b.title = x.y + " оны " + x.m + "-р сар: " + c + " хичээл";
       const bar = el("i");
       bar.style.height = Math.max(3, Math.round((c / 12) * 80)) + "px";
-      b.append(el("small", null, c ? String(c) : ""), bar, el("em", null, m));
-      b.addEventListener("click", () => { month = n; mSel.value = n; selected = 0; paint(); });
+      b.append(el("small", null, c ? String(c) : ""), bar, el("em", null, String(x.m)));
+      b.addEventListener("click", () => { sel = i; mSel.value = i; selected = 0; paint(); });
       bars.append(b);
+      if (runs.length && runs[runs.length - 1].y === x.y) runs[runs.length - 1].n++;
+      else runs.push({ y: x.y, n: 1 });
     });
+    runs.forEach(r => { const e = el("span", null, String(r.y)); e.style.flex = String(r.n); years.append(e); });
+
     const { marks, info } = cur();
     const cnt = countMarks(marks);
-    sum.textContent = year + " оны " + month + "-р сар: орсон " + cnt.done +
+    sum.textContent = win[sel].y + " оны " + win[sel].m + "-р сар: орсон " + cnt.done +
       " · тасалсан " + cnt.absent + " · үлдсэн " + (12 - cnt.done - cnt.absent) + " (12-оос)";
     cells.textContent = "";
     for (let i = 1; i <= 12; i++) {
@@ -1176,14 +1282,14 @@ function lessonWidget(box, student, editable) {
   }
 
   async function persist() {
-    const c = cur();
+    const c = cur(), x = win[sel];
     st.className = "msg";
     st.textContent = "Хадгалж байна...";
     try {
-      await setDoc(doc(db, "lessons", ymId(student.id, year, month)), {
+      await setDoc(doc(db, "lessons", ymId(student.id, x.y, x.m)), {
         studentId: student.id,
         teacherId: auth.currentUser.uid,
-        ym: year + "-" + String(month).padStart(2, "0"),
+        ym: keyOf(x),
         marks: c.marks,
         info: c.info,
         updatedAt: serverTimestamp()
@@ -1210,7 +1316,7 @@ function lessonWidget(box, student, editable) {
       const iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
       info[i] = Object.assign({}, info[i], { date: iso });
     }
-    cache[month] = { marks, info };
+    cache[keyOf(win[sel])] = { marks, info };
     selected = i;
     paint();
     persist();
@@ -1220,14 +1326,13 @@ function lessonWidget(box, student, editable) {
     const c = cur();
     const info = Object.assign({}, c.info);
     if (date || note) info[i] = { date: date || "", note: note || "" }; else delete info[i];
-    cache[month] = { marks: c.marks, info };
+    cache[keyOf(win[sel])] = { marks: c.marks, info };
     paint();
     persist();
   }
 
-  ySel.addEventListener("change", () => { year = Number(ySel.value); selected = 0; loadYear(); });
-  mSel.addEventListener("change", () => { month = Number(mSel.value); selected = 0; paint(); });
-  loadYear();
+  mSel.addEventListener("change", () => { sel = Number(mSel.value); selected = 0; paint(); });
+  loadAll();
 }
 
 // Багшийн хичээлийн самбар: сурагч сонгоно
@@ -1254,6 +1359,27 @@ async function initLessonPanel(uid) {
     console.error(err);
   }
 }
+
+// Админ: 24 сараас өмнөх ирцийн бүртгэлийг устгана
+$("cleanupBtn").addEventListener("click", async () => {
+  const msg = $("cleanupMsg");
+  const first = monthWindow()[0];
+  const cutoff = keyOf(first);
+  if (!confirm(cutoff + "-ээс өмнөх (24 сараас хуучин) ирцийн бүртгэлийг бүгдийг нь устгах уу?")) return;
+  msg.className = "msg";
+  msg.textContent = "Цэвэрлэж байна...";
+  try {
+    const snap = await getDocs(query(collection(db, "lessons"), where("ym", "<", cutoff)));
+    let n = 0;
+    for (const d of snap.docs) { await deleteDoc(d.ref); n++; }
+    msg.className = "msg ok";
+    msg.textContent = n ? n + " сарын бүртгэл устгалаа." : "Устгах хуучин бүртгэл алга.";
+  } catch (err) {
+    msg.className = "msg err";
+    msg.textContent = "Цэвэрлэж чадсангүй.";
+    console.error(err);
+  }
+});
 
 // ---- Багшаар бүлэглэж харуулах (багш -> сурагч -> эцэг эх) ----
 function renderGroups(box, users, myUid, showOrphanParents, bankMap) {
@@ -1368,13 +1494,17 @@ function renderStudentHome(p) {
     if (r[0] === "Зураг") v.append(avatar(p, true));
     box.append(el("span", null, r[0]), v);
   });
-  if (p && p.teacherId) {
+  {
     const v = el("span", null, "Уншиж байна...");
     box.append(el("span", null, "Төлбөрийн данс"), v);
-    getDoc(doc(db, "bank", p.teacherId)).then(sn => {
-      v.textContent = "";
-      v.append(bankLine(sn.exists() ? sn.data() : null));
-    }).catch(() => { v.textContent = "—"; });
+    if (!(p && p.teacherId)) {
+      v.textContent = "Үндсэн багш тохируулаагүй байна";
+    } else {
+      getDoc(doc(db, "bank", p.teacherId)).then(sn => {
+        v.textContent = "";
+        v.append(bankLine(sn.exists() ? sn.data() : null));
+      }).catch(err => { console.error(err); v.textContent = ""; v.append(bankLine(null, true)); });
+    }
   }
 }
 
@@ -1397,7 +1527,8 @@ async function loadParentHome(uid) {
       const t3 = el("div");
       t3.append(el("b", null, r.name || "—"));
       t3.append(el("small", null, "Багш: " + (r.teacherName || "Тохируулаагүй")));
-      if (r.teacherId) t3.append(bankLine(banks[r.teacherId] || null));
+      t3.append(r.teacherId ? bankLine(banks[r.teacherId] || null, banks.__err)
+                            : el("div", "bankline", "Данс: үндсэн багш тохируулаагүй байна"));
       left.append(t3);
       it.append(left);
       it.classList.add("wrap");
@@ -1409,6 +1540,7 @@ async function loadParentHome(uid) {
       det.addEventListener("toggle", () => {
         if (det.open && !built) { built = true; lessonWidget(holder, r, false); }
       });
+      if (rows.length === 1) { built = true; det.open = true; lessonWidget(holder, r, false); }
       it.append(det);
       list.appendChild(it);
     });
